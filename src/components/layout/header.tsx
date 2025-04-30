@@ -19,17 +19,17 @@ const Logo = (props: SVGProps<SVGSVGElement>) => (
 
 
 const navItems = [
-  { href: '#inicio', label: 'Inicio', icon: Home },
-  { href: '#cursos', label: 'Cursos', icon: BookOpen },
-  { href: '#contacto', label: 'Contacto', icon: Mail },
-  { href: '#quienes-somos', label: 'Quiénes Somos', icon: Users },
+  { href: '/', label: 'Inicio', icon: Home }, // Use '/' for homepage link
+  { href: '/cursos', label: 'Cursos', icon: BookOpen }, // Updated link
+  { href: '/#contacto', label: 'Contacto', icon: Mail }, // Keep anchor link for sections on homepage
+  { href: '/#quienes-somos', label: 'Quiénes Somos', icon: Users }, // Keep anchor link
 ];
 
 export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
-        <Link href="#inicio" className="flex items-center gap-2" aria-label="LexConnect Home">
+        <Link href="/" className="flex items-center gap-2" aria-label="LexConnect Home">
           <Logo />
           <span className="text-xl font-bold text-primary">LexConnect</span>
         </Link>
@@ -41,7 +41,7 @@ export function Header() {
               key={item.href}
               href={item.href}
               className="flex items-center gap-1 text-foreground/80 transition-colors hover:text-foreground"
-              prefetch={false}
+              prefetch={item.href.startsWith('/')} // Prefetch only internal pages
             >
               <item.icon className="h-4 w-4" />
               {item.label}
@@ -52,7 +52,7 @@ export function Header() {
         {/* CTA Button (Desktop) */}
         <div className="hidden md:block">
           <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <Link href="#contacto">Consulta Gratis</Link>
+            <Link href="/#contacto">Consulta Gratis</Link>
           </Button>
         </div>
 
@@ -66,21 +66,29 @@ export function Header() {
             </Button>
           </SheetTrigger>
           <SheetContent side="right">
-            <nav className="grid gap-6 text-lg font-medium mt-8">
+            {/* Close sheet on navigation */}
+             <Link href="/" className="flex items-center gap-2 mb-8 px-2.5" aria-label="LexConnect Home">
+                 <Logo />
+                 <span className="text-xl font-bold text-primary">LexConnect</span>
+             </Link>
+            <nav className="grid gap-6 text-lg font-medium">
               {navItems.map((item) => (
-                 <Link
-                    key={item.href}
-                    href={item.href}
-                    className="flex items-center gap-4 px-2.5 text-foreground/80 hover:text-foreground"
-                    prefetch={false}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
-                </Link>
+                 <SheetClose asChild key={item.href}>
+                     <Link
+                        href={item.href}
+                        className="flex items-center gap-4 px-2.5 text-foreground/80 hover:text-foreground"
+                        prefetch={item.href.startsWith('/')}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        {item.label}
+                    </Link>
+                 </SheetClose>
               ))}
-               <Button asChild size="lg" className="mt-4 bg-accent text-accent-foreground hover:bg-accent/90">
-                 <Link href="#contacto">Consulta Gratis</Link>
-                </Button>
+               <SheetClose asChild>
+                   <Button asChild size="lg" className="mt-4 bg-accent text-accent-foreground hover:bg-accent/90">
+                     <Link href="/#contacto">Consulta Gratis</Link>
+                    </Button>
+               </SheetClose>
             </nav>
           </SheetContent>
         </Sheet>

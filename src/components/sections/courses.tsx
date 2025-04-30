@@ -1,7 +1,8 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 const coursesData = [
   {
@@ -57,14 +58,25 @@ export function CoursesSection() {
                  </div>
               </CardContent>
                <CardFooter className="p-6 pt-0">
-                 <Button variant="outline" className="w-full">
-                    <BookOpen className="mr-2 h-4 w-4" />
-                    Ver Detalles del Curso
+                 <Button variant="outline" className="w-full" asChild>
+                    {/* Link to the main courses page */}
+                    <Link href="/cursos">
+                        <BookOpen className="mr-2 h-4 w-4" />
+                        Ver Detalles del Curso
+                    </Link>
                  </Button>
                 </CardFooter>
             </Card>
           ))}
         </div>
+         <div className="mt-12 text-center">
+             <Button size="lg" asChild>
+                <Link href="/cursos">
+                    Ver Todos los Cursos
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+             </Button>
+         </div>
       </div>
     </section>
   );
