@@ -5,6 +5,7 @@ import { BookOpen, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 // Re-using placeholder data for consistency, fetch real data in a real app
+// This data represents all available courses
 const coursesData = [
   {
     id: 1,
@@ -48,17 +49,19 @@ const coursesData = [
    },
 ];
 
+// This page displays the list of all available courses
 export default function CursosPage() {
   return (
     <div className="container mx-auto px-4 py-16 md:px-6 md:py-24 lg:py-32">
-        <div className="mb-12 flex flex-col items-center text-center">
-           <Button variant="outline" size="sm" asChild className="self-start mb-4 md:mb-0 md:absolute md:left-6 lg:left-10">
+        <div className="mb-12 flex flex-col items-center text-center relative">
+           {/* Back button placed top-left for easy navigation */}
+           <Button variant="outline" size="sm" asChild className="absolute left-0 top-0 mb-4 md:mb-0">
               <Link href="/">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Volver a Inicio
               </Link>
            </Button>
-          <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-5xl">
+          <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-5xl mt-12 md:mt-0">
             Nuestros Cursos Especializados
           </h1>
           <p className="mt-4 max-w-3xl text-lg text-foreground/80">
@@ -83,13 +86,15 @@ export default function CursosPage() {
                   <CardTitle className="mb-2 text-xl font-semibold">{course.title}</CardTitle>
                    <p className="mb-3 text-sm text-muted-foreground">{course.modules} Módulos</p>
                   <CardDescription className="text-foreground/80">{course.description}</CardDescription>
+                  {/* Uncomment below to show longer description directly on the card */}
                   {/* <p className="mt-4 text-sm text-foreground/70">{course.longDescription}</p> */}
                  </div>
               </CardContent>
                <CardFooter className="p-6 pt-0">
-                 {/* In a real app, this button would link to a specific course detail page: /cursos/{course.id} */}
+                 {/* In a real app, this button might link to a dedicated course detail page like /cursos/{course.id} */}
+                 {/* For now, it scrolls to a section on this page (if such sections exist) */}
                  <Button variant="outline" className="w-full" asChild>
-                    <Link href={`/cursos/#curso-${course.id}`}> {/* Placeholder link */}
+                    <Link href={`/cursos#curso-${course.id}`}> {/* Updated link to be an anchor on the same page */}
                         <BookOpen className="mr-2 h-4 w-4" />
                         Ver Detalles del Curso
                     </Link>
@@ -99,16 +104,17 @@ export default function CursosPage() {
           ))}
         </div>
 
-         {/* Placeholder for individual course details if needed on the same page */}
+         {/* Placeholder sections for individual course details (scrolled to by the buttons above) */}
          <div className="mt-20 space-y-16">
              {coursesData.map(course => (
-                <div key={`detail-${course.id}`} id={`curso-${course.id}`} className="scroll-mt-20">
-                     {/* Potential detailed view section for each course can be added here */}
-                     {/* Example:
-                     <h3 className="text-2xl font-semibold mb-4">{course.title} - Detalles</h3>
-                     <p>{course.longDescription}</p>
-                     */}
-                </div>
+                <section key={`detail-${course.id}`} id={`curso-${course.id}`} className="scroll-mt-20 p-6 border rounded-lg bg-card shadow-md">
+                     {/* Example Detail View Section */}
+                     <h3 className="text-2xl font-semibold mb-4 text-primary">{course.title} - Detalles</h3>
+                     <p className="text-foreground/90 mb-2">{course.longDescription}</p>
+                     <p className="text-muted-foreground">Número de módulos: {course.modules}</p>
+                     {/* Add more details like syllabus, instructor info, enrollment button etc. */}
+                     <Button className="mt-4">Inscribirse Ahora</Button>
+                </section>
              ))}
          </div>
     </div>

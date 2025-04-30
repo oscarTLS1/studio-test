@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { BookOpen, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
+// Sample data - in a real app, this would come from a database/CMS
 const coursesData = [
   {
     id: 1,
@@ -59,7 +60,7 @@ export function CoursesSection() {
               </CardContent>
                <CardFooter className="p-6 pt-0">
                  <Button variant="outline" className="w-full" asChild>
-                    {/* Link to the main courses page */}
+                    {/* This button now links to the main /cursos page */}
                     <Link href="/cursos">
                         <BookOpen className="mr-2 h-4 w-4" />
                         Ver Detalles del Curso
@@ -70,6 +71,7 @@ export function CoursesSection() {
           ))}
         </div>
          <div className="mt-12 text-center">
+             {/* This button correctly links to the /cursos page which lists all courses */}
              <Button size="lg" asChild>
                 <Link href="/cursos">
                     Ver Todos los Cursos
