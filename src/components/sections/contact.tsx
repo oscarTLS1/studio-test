@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { useState } from 'react'; // Import useState
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast"
+import { sendContactEmail } from '@/actions/send-email'; // Import the server action
 
 
 const formSchema = z.object({
@@ -37,6 +39,7 @@ const formSchema = z.object({
 
 export function ContactSection() {
     const { toast } = useToast()
+    const [isSubmitting, setIsSubmitting] = useState(false); // Manage submitting state
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -48,17 +51,38 @@ export function ContactSection() {
     },
   });
 
-  // Placeholder submit handler
+  // Updated submit handler to use the server action
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Simulate API call
-    console.log('Form submitted:', values);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+    setIsSubmitting(true); // Set submitting state to true
 
-    toast({
-      title: "Mensaje Enviado",
-      description: "Gracias por contactarnos. Nos pondremos en contacto contigo pronto.",
-    })
-    form.reset(); // Reset form after successful submission
+    try {
+        console.log('Attempting to send email with values:', values);
+        const result = await sendContactEmail(values); // Call the server action
+        console.log('Server action result:', result);
+
+        if (result.success) {
+            toast({
+              title: "Mensaje Enviado",
+              description: "Gracias por contactarnos. Nos pondremos en contacto contigo pronto.",
+            });
+            form.reset(); // Reset form after successful submission
+        } else {
+            toast({
+                title: "Error al Enviar",
+                description: result.error || "No se pudo enviar el mensaje. Inténtalo de nuevo.",
+                variant: "destructive",
+            });
+        }
+    } catch (error) {
+        console.error("Error in onSubmit:", error);
+        toast({
+            title: "Error Inesperado",
+            description: "Ocurrió un error inesperado. Por favor, inténtalo de nuevo más tarde.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsSubmitting(false); // Reset submitting state regardless of outcome
+    }
   }
 
   return (
@@ -165,8 +189,8 @@ export function ContactSection() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? 'Enviando...' : 'Enviar Mensaje'}
+                  <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isSubmitting}>
+                    {isSubmitting ? 'Enviando...' : 'Enviar Mensaje'}
                   </Button>
                 </form>
               </Form>
