@@ -14,59 +14,73 @@ const contactFormSchema = z.object({
 // Type alias for validated form data
 type ContactFormData = z.infer<typeof contactFormSchema>;
 
-// Ensure environment variables are set
+// --- Configuration Check ---
+// Check if environment variables are set during server startup/build.
+// Note: This check runs when the module is loaded, not on every request.
+let configError = false;
 if (!process.env.RESEND_API_KEY) {
-    console.error("Error: RESEND_API_KEY environment variable is not set.");
+    console.error("❌ ERROR: RESEND_API_KEY environment variable is not set.");
+    configError = true;
 }
 if (!process.env.EMAIL_TO) {
-    console.error("Error: EMAIL_TO environment variable is not set. Using fallback.");
+    console.error("⚠️ WARNING: EMAIL_TO environment variable is not set. Using fallback: oscarjaviersierrasanchez@gmail.com");
+    // No configError = true here, as we have a fallback
 }
 if (!process.env.EMAIL_FROM) {
-    console.error("Error: EMAIL_FROM environment variable is not set. Using fallback.");
+    console.error("❌ ERROR: EMAIL_FROM environment variable is not set. This must be a verified domain email from Resend (e.g., no-reply@yourdomain.com).");
+     configError = true;
+} else if (process.env.EMAIL_FROM === 'onboarding@resend.dev') {
+    console.warn("⚠️ WARNING: Using default EMAIL_FROM 'onboarding@resend.dev'. Ensure this is intended and allowed by Resend for your use case.");
 }
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Only instantiate Resend if the API key is potentially available
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const emailTo = process.env.EMAIL_TO || 'oscarjaviersierrasanchez@gmail.com'; // Fallback recipient
-const emailFrom = process.env.EMAIL_FROM || 'onboarding@resend.dev'; // Fallback sender (Resend default)
+const emailFrom = process.env.EMAIL_FROM; // No fallback here, it must be set and verified
 
 /**
  * Server action to send contact form data via email using Resend.
  * Validates input and handles email sending.
  *
- * Requires environment variables:
- * - RESEND_API_KEY: Your Resend API key.
- * - EMAIL_TO: The email address to send the contact form submissions to.
- * - EMAIL_FROM: The 'From' address for the email (must be a domain verified with Resend).
+ * Potential reasons for "Error al Enviar":
+ * 1. Missing `.env.local` file or incorrect variables within it.
+ * 2. `RESEND_API_KEY` is missing, invalid, or expired.
+ * 3. `EMAIL_FROM` is missing or uses a domain *not verified* in your Resend account.
+ * 4. `EMAIL_TO` is invalid (less likely with the fallback).
+ * 5. Resend service outage or temporary API issues.
+ * 6. Network connectivity problems on the server.
+ * 7. Server environment doesn't have access to the environment variables.
+ *
+ * Check your server logs for more detailed error messages from Resend.
  */
 export async function sendContactEmail(formData: ContactFormData): Promise<{ success: boolean; error?: string }> {
-  // Validate input data against the schema
-  const validatedFields = contactFormSchema.safeParse(formData);
+  console.log('sendContactEmail action triggered.'); // Log entry point
 
-  // If validation fails, return an error
+  // 1. Validate Input Data
+  const validatedFields = contactFormSchema.safeParse(formData);
   if (!validatedFields.success) {
     console.error('Validation Error:', validatedFields.error.flatten().fieldErrors);
     return {
       success: false,
       error: 'Datos inválidos. Por favor, revisa el formulario.',
-      // Consider returning specific field errors if needed:
-      // error: JSON.stringify(validatedFields.error.flatten().fieldErrors),
     };
   }
+  console.log('Form data validated successfully.');
 
-  const { name, email, subject, message } = validatedFields.data;
-
-  // Check if essential environment variables are missing after the initial check
-  if (!process.env.RESEND_API_KEY || !process.env.EMAIL_TO || !process.env.EMAIL_FROM) {
+  // 2. Check Runtime Configuration
+  if (!resend || !emailFrom) {
     const missingVars = [
-      !process.env.RESEND_API_KEY && "RESEND_API_KEY",
-      !process.env.EMAIL_TO && "EMAIL_TO",
-      !process.env.EMAIL_FROM && "EMAIL_FROM",
+      !resend && "RESEND_API_KEY (missing or invalid)",
+      !emailFrom && "EMAIL_FROM (missing or unverified domain)",
     ].filter(Boolean).join(", ");
-    console.error(`Email configuration error: Missing environment variables: ${missingVars}`);
-    return { success: false, error: 'Error de configuración del servidor. No se pudo enviar el correo.' };
+    console.error(`❌ Email configuration error at runtime: Missing or invalid: ${missingVars}`);
+    return { success: false, error: 'Error de configuración del servidor [Code: CFG]. No se pudo enviar el correo.' };
   }
+  console.log(`Sending email via Resend: From <${emailFrom}> To <${emailTo}>`);
 
 
+  // 3. Attempt to Send Email
+  const { name, email, subject, message } = validatedFields.data;
   try {
     const { data, error } = await resend.emails.send({
       from: `Contacto LexConnect <${emailFrom}>`, // Use the configured 'from' address
@@ -84,35 +98,46 @@ export async function sendContactEmail(formData: ContactFormData): Promise<{ suc
       `,
     });
 
+    // 4. Handle Resend Response
     if (error) {
-      console.error('Resend Error:', error);
-      return { success: false, error: 'Error al enviar el correo. Inténtalo de nuevo más tarde.' };
+      // Log the detailed error from Resend on the server
+      console.error('❌ Resend API Error:', error);
+
+      // Provide a generic error to the client, but potentially log a specific code
+      // You could map common Resend error codes to user-friendlier messages if desired
+      let clientErrorMessage = 'Error al enviar el correo [Code: RESEND]. Inténtalo de nuevo más tarde.';
+      // Example: Customize message based on error type (check Resend's error structure)
+      // if (error.name === 'validation_error') {
+      //    clientErrorMessage = 'Error de validación con el servicio de correo. Contacta al soporte.';
+      // }
+
+      return { success: false, error: clientErrorMessage };
     }
 
-    console.log('Email sent successfully:', data);
+    console.log('✅ Email sent successfully via Resend. ID:', data?.id);
     return { success: true };
+
   } catch (e) {
-    console.error('Error sending email:', e);
-     // Check if it's a known Resend error type if needed for more specific messages
+     // 5. Handle Unexpected Errors (Network issues, etc.)
+    console.error('❌ Unexpected error sending email:', e);
+    let errorMessage = 'Ocurrió un error inesperado al enviar el correo [Code: UNEXPECTED].';
     if (e instanceof Error) {
-        return { success: false, error: `Error del servidor: ${e.message}` };
+        // You could add more specific checks here if needed
+        // errorMessage = `Error del servidor: ${e.message}`; // Avoid sending raw error messages to client
     }
-    return { success: false, error: 'Ocurrió un error inesperado al enviar el correo.' };
+    return { success: false, error: errorMessage };
   }
 }
 
 /**
- * NOTE TO USER:
- * To make this work, you need to:
- * 1. Install the `resend` package: `npm install resend` (already added to package.json).
- * 2. Sign up for Resend (https://resend.com/) and get an API key.
- * 3. Verify a domain with Resend to use as the 'From' address.
- * 4. Create a `.env.local` file in the root of your project (if it doesn't exist).
- * 5. Add the following environment variables to your `.env.local` file:
+ * NOTE TO USER / DEVELOPER:
+ * Ensure your environment variables are correctly set up in a `.env.local` file:
  *
- *    RESEND_API_KEY=your_resend_api_key
- *    EMAIL_TO=oscarjaviersierrasanchez@gmail.com
- *    EMAIL_FROM=your_verified_email@yourdomain.com  # Replace with your verified Resend domain email
+ * RESEND_API_KEY=re_****************************     # Get from Resend Dashboard -> API Keys
+ * EMAIL_TO=oscarjaviersierrasanchez@gmail.com       # Recipient address
+ * EMAIL_FROM=tu_email_verificado@tudominio.com    # MUST be an email from a domain VERIFIED in Resend Dashboard -> Domains
  *
- * 6. Restart your development server (`npm run dev`) after adding the .env.local file.
+ * VERY IMPORTANT: The `EMAIL_FROM` domain *must* be verified with Resend, otherwise emails will fail.
+ * Restart your development server (`npm run dev`) after creating or modifying the `.env.local` file.
+ * Check the server console logs for detailed error messages if sending fails.
  */
