@@ -28,7 +28,7 @@ export function HeroSection() {
         </p>
         <div className="mt-10 flex items-center justify-center gap-x-6">
           <Button size="lg" asChild className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
-            <Link href="#contacto">Obtener Consulta Gratis</Link>
+            <Link href="#contacto">Obtener Consulta</Link>
           </Button>
           <Button size="lg" variant="outline" asChild className="shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
             <Link href="#quienes-somos">Conocer Más</Link>
