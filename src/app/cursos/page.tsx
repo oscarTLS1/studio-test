@@ -13,7 +13,7 @@ const coursesData = [
     description: 'Aprende los fundamentos legales esenciales para la gestión empresarial moderna y la toma de decisiones estratégicas.',
     longDescription: 'Este curso cubre la formación de sociedades, gobierno corporativo, fusiones y adquisiciones, y la regulación de valores. Ideal para empresarios y profesionales legales.',
     imageUrl: 'https://picsum.photos/400/250?random=1',
-    hint: 'corporate law books',
+    hint: 'corporate law books scale justice',
     modules: 5,
   },
   {
@@ -22,7 +22,7 @@ const coursesData = [
     description: 'Navega las complejidades de la legislación laboral y evita contingencias costosas.',
     longDescription: 'Profundiza en contratos laborales, despidos, seguridad social, negociación colectiva y prevención de litigios. Esencial para gerentes de RRHH y dueños de negocios.',
     imageUrl: 'https://picsum.photos/400/250?random=2',
-    hint: 'labor law handshake',
+    hint: 'labor law handshake agreement',
     modules: 8,
   },
   {
@@ -31,7 +31,7 @@ const coursesData = [
     description: 'Cumple con la normativa vigente (RGPD, LOPD) y protege la información sensible.',
     longDescription: 'Explora los principios de protección de datos, derechos de los interesados, transferencias internacionales y gestión de brechas de seguridad. Relevante para cualquier organización.',
     imageUrl: 'https://picsum.photos/400/250?random=3',
-    hint: 'data privacy shield',
+    hint: 'data privacy shield lock security',
     modules: 6,
   },
    {
@@ -40,7 +40,7 @@ const coursesData = [
     description: 'Domina la redacción y negociación de contratos comerciales complejos.',
     longDescription: 'Análisis detallado de cláusulas clave, contratos de distribución, agencia, franquicia y resolución de disputas contractuales.',
     imageUrl: 'https://picsum.photos/400/250?random=5',
-    hint: 'contract law signing',
+    hint: 'contract law signing pen document',
     modules: 7,
   },
    {
@@ -49,7 +49,7 @@ const coursesData = [
     description: 'Protege tus activos intangibles: marcas, patentes y derechos de autor online.',
     longDescription: 'Cubre el registro de marcas, protección de software, licencias de contenido digital, y la lucha contra la piratería en internet.',
     imageUrl: 'https://picsum.photos/400/250?random=6',
-    hint: 'intellectual property lightbulb',
+    hint: 'intellectual property lightbulb brain gears',
     modules: 6,
    },
 ];
@@ -58,15 +58,17 @@ const coursesData = [
 export default function CursosPage() {
   return (
     <div className="container mx-auto px-4 py-16 md:px-6 md:py-24 lg:py-32">
-        <div className="mb-12 flex flex-col items-center text-center relative">
-           {/* Back button placed top-left for easy navigation */}
-           <Button variant="outline" size="sm" asChild className="absolute left-0 top-0 mb-4 md:mb-0">
+        {/* Back button moved to the top-left of the content area */}
+        <div className="mb-8 flex justify-start"> {/* Container to align button left */}
+           <Button variant="outline" size="sm" asChild>
               <Link href="/">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Volver a Inicio
               </Link>
            </Button>
-          <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-5xl mt-12 md:mt-0">
+        </div>
+        <div className="mb-12 flex flex-col items-center text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-5xl">
             Nuestros Cursos Especializados
           </h1>
           <p className="mt-4 max-w-3xl text-lg text-foreground/80">
