@@ -6,7 +6,17 @@ export function Footer() {
   return (
     <footer className="bg-muted py-6 text-muted-foreground">
       <div className="container mx-auto flex flex-col items-center justify-between px-4 text-sm md:flex-row md:px-6">
-        <p>&copy; {currentYear} LexConnect. Todos los derechos reservados.</p>
+        <p>&copy; {currentYear} LexConnect-
+          <a
+            href="https://www.instagram.com/oscar_sierra_2921/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-foreground underline"
+          >
+            oscarsierra
+          </a>
+          . Todos los derechos reservados.
+        </p>
         <nav className="mt-2 flex gap-4 md:mt-0">
           <Link href="#" className="hover:text-foreground">
             Política de Privacidad
