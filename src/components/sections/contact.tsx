@@ -109,7 +109,7 @@ export function ContactSection() {
             console.log('Attempting to send email via EmailJS with params:', templateParams);
             // Use emailjs.send, NOT sendForm if you are passing an object
             const response = await emailjs.send(serviceId, templateId, templateParams, publicKey);
-            console.log('EmailJS Success:', response.status, response.text);
+            console.log('EmailJS Success:', response.status, response.text); // This is correct for success
 
             toast({
               title: "Mensaje Enviado",
@@ -117,11 +117,27 @@ export function ContactSection() {
             });
             form.reset();
 
-        } catch (error) {
-            console.error('EmailJS Error:', error);
+        } catch (error: any) { // Catch specifically 'any' to inspect the error object
+            console.error('EmailJS Error encountered:', error); // Log the full error object
+
+            // Provide more details if possible
+            let errorDescription = "No se pudo enviar el mensaje [Code: EMAILJS_SEND]. Inténtalo de nuevo más tarde.";
+            if (error?.status && typeof error?.text === 'string') {
+                 // EmailJS often rejects with an object containing status and text
+                 errorDescription = `Error ${error.status}: ${error.text} [Code: EMAILJS_API]. Verifica la configuración de EmailJS (IDs, Clave, Plantilla).`;
+                 console.error(`EmailJS API Error Details: Status=${error.status}, Text=${error.text}`);
+            } else if (error instanceof Error) {
+                 errorDescription = `Error: ${error.message} [Code: EMAILJS_CLIENT]. Revisa la consola del navegador para más detalles.`;
+            } else {
+                 // Fallback for unknown error structure
+                 errorDescription = `Ocurrió un error inesperado [Code: EMAILJS_UNKNOWN]. Revisa la consola del navegador.`;
+                 console.error("Unknown EmailJS error structure:", error);
+            }
+
+
             toast({
                 title: "Error al Enviar",
-                description: "No se pudo enviar el mensaje [Code: EMAILJS_SEND]. Inténtalo de nuevo más tarde.",
+                description: errorDescription,
                 variant: "destructive",
             });
         } finally {
