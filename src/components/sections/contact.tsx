@@ -39,18 +39,21 @@ const formSchema = z.object({
 
 // --- EmailJS Configuration Check ---
 // Check if environment variables are set client-side.
+// This check runs when the script is loaded, but the UI feedback depends on the component mounting.
 let emailJsConfigError = false;
-if (!process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID) {
-    console.error("❌ ERROR: NEXT_PUBLIC_EMAILJS_SERVICE_ID environment variable is not set.");
-    emailJsConfigError = true;
-}
-if (!process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID) {
-    console.error("❌ ERROR: NEXT_PUBLIC_EMAILJS_TEMPLATE_ID environment variable is not set.");
-    emailJsConfigError = true;
-}
-if (!process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY) {
-    console.error("❌ ERROR: NEXT_PUBLIC_EMAILJS_PUBLIC_KEY environment variable is not set.");
-    emailJsConfigError = true;
+if (typeof window !== 'undefined') { // Only run this check on the client
+    if (!process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID) {
+        console.error("❌ ERROR: NEXT_PUBLIC_EMAILJS_SERVICE_ID environment variable is not set.");
+        emailJsConfigError = true;
+    }
+    if (!process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID) {
+        console.error("❌ ERROR: NEXT_PUBLIC_EMAILJS_TEMPLATE_ID environment variable is not set.");
+        emailJsConfigError = true;
+    }
+    if (!process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY) {
+        console.error("❌ ERROR: NEXT_PUBLIC_EMAILJS_PUBLIC_KEY environment variable is not set.");
+        emailJsConfigError = true;
+    }
 }
 
 
@@ -138,7 +141,7 @@ export function ContactSection() {
             </p>
             </div>
 
-            {/* Developer Note */}
+            {/* Developer Note: Show config error only after component has mounted on client */}
             {isClient && emailJsConfigError && (
                  <div className="mb-8 p-4 border border-destructive/50 rounded-lg bg-destructive/10 text-destructive text-center">
                     <p className="font-semibold">¡Atención Desarrollador!</p>
