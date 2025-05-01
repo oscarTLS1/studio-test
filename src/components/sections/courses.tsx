@@ -11,18 +11,21 @@ const coursesData = [
     title: 'Introducción al Derecho Corporativo',
     description: 'Aprende los fundamentos legales esenciales para la gestión empresarial.',
     imageUrl: 'https://picsum.photos/400/250?random=1',
+    hint: 'law study',
   },
   {
     id: 2,
     title: 'Derecho Laboral para Empleadores',
     description: 'Navega las complejidades de la legislación laboral y evita contingencias.',
     imageUrl: 'https://picsum.photos/400/250?random=2',
+    hint: 'legal documents',
   },
   {
     id: 3,
     title: 'Protección de Datos Personales',
     description: 'Cumple con la normativa vigente y protege la información sensible.',
     imageUrl: 'https://picsum.photos/400/250?random=3',
+    hint: 'data privacy lock',
   },
 ];
 
@@ -48,6 +51,7 @@ export function CoursesSection() {
                     alt={course.title}
                     layout="fill"
                     objectFit="cover"
+                    data-ai-hint={course.hint}
                     />
                 </div>
 

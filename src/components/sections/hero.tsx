@@ -14,6 +14,7 @@ export function HeroSection() {
         quality={80}
         className="absolute inset-0 z-0 opacity-20"
         priority // Load image early
+        data-ai-hint="law abstract"
       />
        {/* Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-secondary/50 via-secondary/80 to-secondary z-10"></div>

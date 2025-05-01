@@ -15,6 +15,7 @@ export function AboutSection() {
                 layout="fill"
                 objectFit="cover"
                 className="transition-transform duration-500 hover:scale-105"
+                data-ai-hint="law office team"
              />
            </div>
 

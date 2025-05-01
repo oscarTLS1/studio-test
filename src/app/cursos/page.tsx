@@ -13,6 +13,7 @@ const coursesData = [
     description: 'Aprende los fundamentos legales esenciales para la gestión empresarial moderna y la toma de decisiones estratégicas.',
     longDescription: 'Este curso cubre la formación de sociedades, gobierno corporativo, fusiones y adquisiciones, y la regulación de valores. Ideal para empresarios y profesionales legales.',
     imageUrl: 'https://picsum.photos/400/250?random=1',
+    hint: 'corporate law books',
     modules: 5,
   },
   {
@@ -21,6 +22,7 @@ const coursesData = [
     description: 'Navega las complejidades de la legislación laboral y evita contingencias costosas.',
     longDescription: 'Profundiza en contratos laborales, despidos, seguridad social, negociación colectiva y prevención de litigios. Esencial para gerentes de RRHH y dueños de negocios.',
     imageUrl: 'https://picsum.photos/400/250?random=2',
+    hint: 'labor law handshake',
     modules: 8,
   },
   {
@@ -29,6 +31,7 @@ const coursesData = [
     description: 'Cumple con la normativa vigente (RGPD, LOPD) y protege la información sensible.',
     longDescription: 'Explora los principios de protección de datos, derechos de los interesados, transferencias internacionales y gestión de brechas de seguridad. Relevante para cualquier organización.',
     imageUrl: 'https://picsum.photos/400/250?random=3',
+    hint: 'data privacy shield',
     modules: 6,
   },
    {
@@ -37,6 +40,7 @@ const coursesData = [
     description: 'Domina la redacción y negociación de contratos comerciales complejos.',
     longDescription: 'Análisis detallado de cláusulas clave, contratos de distribución, agencia, franquicia y resolución de disputas contractuales.',
     imageUrl: 'https://picsum.photos/400/250?random=5',
+    hint: 'contract law signing',
     modules: 7,
   },
    {
@@ -45,6 +49,7 @@ const coursesData = [
     description: 'Protege tus activos intangibles: marcas, patentes y derechos de autor online.',
     longDescription: 'Cubre el registro de marcas, protección de software, licencias de contenido digital, y la lucha contra la piratería en internet.',
     imageUrl: 'https://picsum.photos/400/250?random=6',
+    hint: 'intellectual property lightbulb',
     modules: 6,
    },
 ];
@@ -78,6 +83,7 @@ export default function CursosPage() {
                     alt={course.title}
                     layout="fill"
                     objectFit="cover"
+                    data-ai-hint={course.hint}
                     />
                 </div>
               </CardHeader>

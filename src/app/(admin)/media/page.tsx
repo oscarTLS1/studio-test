@@ -7,10 +7,10 @@ import Image from 'next/image'; // Using next/image for placeholders
 
 // Placeholder media data
 const placeholderMedia = [
-  { id: 1, name: 'hero-background.jpg', type: 'image', url: 'https://picsum.photos/100/60?random=10' },
-  { id: 2, name: 'curso-intro.mp4', type: 'video', url: 'https://via.placeholder.com/100x60.png?text=Video+Thumb' },
-  { id: 3, name: 'team-photo.png', type: 'image', url: 'https://picsum.photos/100/60?random=11' },
-  { id: 4, name: 'course-module1.jpg', type: 'image', url: 'https://picsum.photos/100/60?random=12' },
+  { id: 1, name: 'hero-background.jpg', type: 'image', url: 'https://picsum.photos/100/60?random=10', hint: 'law abstract' },
+  { id: 2, name: 'curso-intro.mp4', type: 'video', url: 'https://via.placeholder.com/100x60.png?text=Video+Thumb' }, // Keep placeholder as is
+  { id: 3, name: 'team-photo.png', type: 'image', url: 'https://picsum.photos/100/60?random=11', hint: 'law team meeting' },
+  { id: 4, name: 'course-module1.jpg', type: 'image', url: 'https://picsum.photos/100/60?random=12', hint: 'legal books' },
 ];
 
 
@@ -49,7 +49,13 @@ export default function AdminMediaPage() {
                     {placeholderMedia.map((media) => (
                          <div key={media.id} className="relative group border rounded-lg overflow-hidden aspect-video flex items-center justify-center bg-muted">
                             {media.type === 'image' ? (
-                                <Image src={media.url} alt={media.name} layout="fill" objectFit="cover" />
+                                <Image
+                                  src={media.url}
+                                  alt={media.name}
+                                  layout="fill"
+                                  objectFit="cover"
+                                  data-ai-hint={media.hint}
+                                />
                             ) : (
                                 <div className="flex flex-col items-center text-muted-foreground">
                                     <Video className="h-8 w-8 mb-1" />
