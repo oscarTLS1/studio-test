@@ -52,7 +52,7 @@ export function Header() {
         {/* CTA Button (Desktop) */}
         <div className="hidden md:block">
           <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <Link href="/#contacto">Consulta Gratis</Link>
+            <Link href="/#contacto">Contáctenos</Link>
           </Button>
         </div>
 
@@ -86,7 +86,7 @@ export function Header() {
               ))}
                <SheetClose asChild>
                    <Button asChild size="lg" className="mt-4 bg-accent text-accent-foreground hover:bg-accent/90">
-                     <Link href="/#contacto">Consulta Gratis</Link>
+                     <Link href="/#contacto">Contáctenos</Link>
                     </Button>
                </SheetClose>
             </nav>
