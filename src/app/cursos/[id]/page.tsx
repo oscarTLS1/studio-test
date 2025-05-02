@@ -18,9 +18,7 @@ type CourseDetailPageProps = {
   };
 };
 
-export default function CourseDetailPage({ params }: CourseDetailPageProps) {
-  const { id } = params;
-
+export default function CourseDetailPage({ params: { id } }: CourseDetailPageProps) {
   // Find the course data matching the ID from the URL
   const course = lawModules.find((module) => module.id === id);
 
