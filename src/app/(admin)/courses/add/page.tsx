@@ -12,7 +12,7 @@ import Link from 'next/link';
 interface Module {
   id: string; // Use unique ID for keys, e.g., timestamp or UUID
   title: string;
-  videoUrl: string;
+  videoUrl: string; // Added videoUrl field
 }
 
 export default function AdminAddCoursePage() {
@@ -147,7 +147,7 @@ export default function AdminAddCoursePage() {
       <div className="mt-8 p-4 border rounded-lg bg-secondary/50">
             <h3 className="font-semibold text-lg mb-2">Funcionalidad Pendiente</h3>
             <ul className="list-disc list-inside text-muted-foreground space-y-1 text-sm">
-                <li>Implementar la lógica para guardar el curso y sus módulos en la base de datos.</li>
+                <li>Implementar la lógica para guardar el curso y sus módulos (incluyendo URL de video) en la base de datos.</li>
                 <li>Añadir validación más robusta (e.g., Zod).</li>
                 <li>Mostrar mensajes de éxito/error al guardar.</li>
                 <li>Considerar la carga de imágenes de portada para el curso.</li>

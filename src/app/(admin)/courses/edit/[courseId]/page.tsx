@@ -14,7 +14,7 @@ import { lawModules } from '@/app/cursos/page'; // Import placeholder data sourc
 interface Module {
   id: string; // Unique ID for keys
   title: string;
-  videoUrl: string;
+  videoUrl: string; // Added videoUrl field
 }
 
 // Placeholder type for Course data
@@ -88,7 +88,7 @@ export default function AdminEditCoursePage() {
     e.preventDefault();
     // TODO: Implement database update logic here
     if (courseData) {
-      console.log('Updating course:', { ...courseData, modules });
+      console.log('Updating course:', { ...courseData, modules }); // Log updated modules including videoUrl
       // Show success toast/message
       // Optionally redirect: router.push('/admin/courses');
     }
@@ -158,7 +158,7 @@ export default function AdminEditCoursePage() {
       <Card>
         <CardHeader>
           <CardTitle>Módulos del Curso</CardTitle>
-          <CardDescription>Edita, añade o elimina los módulos de aprendizaje.</CardDescription>
+          <CardDescription>Edita, añade o elimina los módulos de aprendizaje. Incluye título y URL de video de YouTube.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {modules.length > 0 && (
@@ -214,7 +214,7 @@ export default function AdminEditCoursePage() {
       <div className="mt-8 p-4 border rounded-lg bg-secondary/50">
             <h3 className="font-semibold text-lg mb-2">Funcionalidad Pendiente</h3>
             <ul className="list-disc list-inside text-muted-foreground space-y-1 text-sm">
-                <li>Implementar la lógica para actualizar el curso y sus módulos en la base de datos.</li>
+                <li>Implementar la lógica para actualizar el curso y sus módulos (incluyendo URL de video) en la base de datos.</li>
                 <li>Manejar errores si el curso no se encuentra al cargar.</li>
                 <li>Mostrar mensajes de éxito/error al guardar.</li>
                 <li>Permitir reordenar módulos.</li>
