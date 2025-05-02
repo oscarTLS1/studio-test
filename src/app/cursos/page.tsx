@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-// Expanded data structure: modules are now objects with title and optional videoUrl
+// Expanded data structure: modules are now objects with title and optional videoUrl/externalLink
 // Added a real YouTube URL for demonstration purposes.
 // Restructured 'civil' to have subCourses.
 // Restructured 'laboral' to have subCourses.
@@ -165,12 +165,32 @@ const lawModules = [
             imageUrl: 'https://picsum.photos/400/250?random=44',
             hint: 'courtroom judge gavel legal process',
             modules: [
-                { title: 'Principios Generales y Competencia', videoUrl: 'https://www.youtube.com/watch?v=lab4_mod1' }, // Placeholder URL updated
-                { title: 'Demanda, Admisión y Notificación' },
-                { title: 'Audiencias (Conciliación, Decisión, Trámite y Juzgamiento)'},
-                { title: 'Régimen Probatorio Laboral', videoUrl: 'https://www.youtube.com/watch?v=lab4_mod2' }, // Placeholder URL updated
-                { title: 'Recursos (Reposición, Apelación, Súplica, Casación, Revisión)' },
-                { title: 'Procesos Especiales (Fuero Sindical, Huelga)' },
+                {
+                    title: 'Principios Generales y Competencia',
+                    videoUrl: 'https://www.youtube.com/watch?v=lab4_mod1',
+                    externalLink: 'http://www.secretariasenado.gov.co/senado/basedoc/codigo_procedimental_laboral_pr001.html#1' // Placeholder link
+                },
+                {
+                    title: 'Demanda, Admisión y Notificación',
+                    externalLink: 'http://www.secretariasenado.gov.co/senado/basedoc/codigo_procedimental_laboral_pr001.html#25' // Placeholder link
+                },
+                {
+                    title: 'Audiencias (Conciliación, Decisión, Trámite y Juzgamiento)',
+                    externalLink: 'http://www.secretariasenado.gov.co/senado/basedoc/codigo_procedimental_laboral_pr002.html#72' // Placeholder link
+                },
+                {
+                    title: 'Régimen Probatorio Laboral',
+                    videoUrl: 'https://www.youtube.com/watch?v=lab4_mod2',
+                    externalLink: 'http://www.secretariasenado.gov.co/senado/basedoc/codigo_procedimental_laboral_pr001.html#51' // Placeholder link
+                },
+                {
+                    title: 'Recursos (Reposición, Apelación, Súplica, Casación, Revisión)',
+                    externalLink: 'http://www.secretariasenado.gov.co/senado/basedoc/codigo_procedimental_laboral_pr002.html#62' // Placeholder link
+                },
+                {
+                    title: 'Procesos Especiales (Fuero Sindical, Huelga)',
+                    externalLink: 'http://www.secretariasenado.gov.co/senado/basedoc/codigo_procedimental_laboral_pr003.html#113' // Placeholder link
+                },
             ]
         },
     ],

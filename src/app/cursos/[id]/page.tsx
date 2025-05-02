@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ListChecks, CheckCircle2, Circle, Youtube } from 'lucide-react';
+import { ArrowLeft, ListChecks, CheckCircle2, Circle, Youtube, Link as LinkExternal } from 'lucide-react'; // Added LinkExternal
 import Link from 'next/link';
 import Image from 'next/image'; // Import Image for sub-course display
 import { lawModules } from '../page'; // Assuming this data source is correct
@@ -105,6 +105,7 @@ function YouTubePlayer({ videoId }: { videoId: string | null }) {
 interface CourseModule {
   title: string;
   videoUrl?: string; // Optional video URL
+  externalLink?: string; // Optional external link for content
 }
 
 // Type for a course area (like Constitucional, Penal) or a sub-course (like Personas y Familia)
@@ -238,6 +239,13 @@ export default function CourseDetailPage() {
       setSelectedVideoUrl(videoUrl || null);
   }
 
+  // Function to handle opening external links
+  const handleOpenExternalLink = (url: string | undefined) => {
+      if (url) {
+          window.open(url, '_blank', 'noopener,noreferrer');
+      }
+  };
+
 
   // Handle loading state
   if (isLoading || course === undefined) { // Check for undefined initial state too
@@ -338,59 +346,85 @@ export default function CourseDetailPage() {
                  Módulos del Curso
               </CardTitle>
               <CardDescription>
-                Haz clic en un módulo con el ícono <Youtube className="inline-block h-4 w-4 text-red-600 align-middle mx-1"/> para cargar el video. Usa el botón para marcar tu progreso.
+                 Haz clic en un módulo con <Youtube className="inline-block h-4 w-4 text-red-600 align-middle mx-1"/> para cargar el video, o con <LinkExternal className="inline-block h-4 w-4 text-blue-600 align-middle mx-1"/> para abrir el contenido externo. Usa el botón para marcar tu progreso.
               </CardDescription>
             </CardHeader>
             <CardContent>
               {course.modules && course.modules.length > 0 ? (
                 <ul className="space-y-3">
-                  {course.modules.map((module, index) => (
-                    <li
+                  {course.modules.map((module, index) => {
+                    const hasVideo = !!module.videoUrl;
+                    const hasExternalLink = !!module.externalLink;
+                    const isClickable = hasVideo || hasExternalLink;
+                    const isSelectedVideo = hasVideo && selectedVideoUrl === module.videoUrl;
+
+                    const handleClick = () => {
+                      if (hasVideo) {
+                        handleSelectVideo(module.videoUrl);
+                      } else if (hasExternalLink) {
+                        handleOpenExternalLink(module.externalLink);
+                      }
+                    };
+
+                    const handleKeyDown = (e: React.KeyboardEvent) => {
+                      if (isClickable && (e.key === 'Enter' || e.key === ' ')) {
+                        handleClick();
+                      }
+                    };
+
+                    return (
+                      <li
                         key={index}
                         className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-md border transition-all duration-200
-                                    ${module.videoUrl ? 'hover:bg-muted/80 cursor-pointer' : 'bg-secondary/30 cursor-default'}
-                                    ${selectedVideoUrl === module.videoUrl ? 'bg-accent/20 border-accent ring-2 ring-accent/50' : 'border-border'}` // Highlight if selected
+                                      ${isClickable ? 'hover:bg-muted/80 cursor-pointer' : 'bg-secondary/30 cursor-default'}
+                                      ${isSelectedVideo ? 'bg-accent/20 border-accent ring-2 ring-accent/50' : 'border-border'}` // Highlight if video selected
                                 }
-                        // Only attach click handler if there's a video
-                        onClick={module.videoUrl ? () => handleSelectVideo(module.videoUrl) : undefined}
-                        role={module.videoUrl ? "button" : undefined}
-                        tabIndex={module.videoUrl ? 0 : undefined}
-                        aria-label={module.videoUrl ? `Cargar video del Módulo ${index + 1}: ${module.title}` : `Módulo ${index + 1}: ${module.title}`}
-                        onKeyDown={module.videoUrl ? (e) => { if (e.key === 'Enter' || e.key === ' ') handleSelectVideo(module.videoUrl); } : undefined} // Add keyboard accessibility
-                    >
-                       <div className="flex items-center mb-2 sm:mb-0 flex-1 mr-4"> {/* Added mr-4 for spacing */}
-                           {module.videoUrl ? (
-                                <Youtube className="h-5 w-5 mr-3 text-red-600 flex-shrink-0" aria-hidden="true" />
-                           ) : (
-                               <div className="w-5 h-5 mr-3 flex-shrink-0" aria-hidden="true"></div> // Placeholder for alignment
-                           )}
-                            <span className={`text-sm font-medium ${completedStatus[index] ? 'text-muted-foreground line-through' : ''}`}>
-                             {`Módulo ${index + 1}: ${module.title}`}
-                            </span>
-                       </div>
+                        onClick={isClickable ? handleClick : undefined}
+                        role={isClickable ? "button" : undefined}
+                        tabIndex={isClickable ? 0 : undefined}
+                        aria-label={
+                           hasVideo ? `Cargar video del Módulo ${index + 1}: ${module.title}`
+                           : hasExternalLink ? `Abrir contenido externo del Módulo ${index + 1}: ${module.title}`
+                           : `Módulo ${index + 1}: ${module.title}`
+                        }
+                        onKeyDown={handleKeyDown} // Add keyboard accessibility
+                      >
+                        <div className="flex items-center mb-2 sm:mb-0 flex-1 mr-4"> {/* Added mr-4 for spacing */}
+                          {hasVideo ? (
+                            <Youtube className="h-5 w-5 mr-3 text-red-600 flex-shrink-0" aria-hidden="true" />
+                          ) : hasExternalLink ? (
+                             <LinkExternal className="h-5 w-5 mr-3 text-blue-600 flex-shrink-0" aria-hidden="true" />
+                          ) : (
+                            <div className="w-5 h-5 mr-3 flex-shrink-0" aria-hidden="true"></div> // Placeholder for alignment
+                          )}
+                          <span className={`text-sm font-medium ${completedStatus[index] ? 'text-muted-foreground line-through' : ''}`}>
+                            {`Módulo ${index + 1}: ${module.title}`}
+                          </span>
+                        </div>
 
-                      {/* Completion Button - Stop propagation to prevent video load */}
-                      <div className="flex items-center justify-end space-x-2 flex-shrink-0"> {/* Prevent button from shrinking */}
+                        {/* Completion Button - Stop propagation to prevent video/link activation */}
+                        <div className="flex items-center justify-end space-x-2 flex-shrink-0"> {/* Prevent button from shrinking */}
                           <Button
                             variant={completedStatus[index] ? 'secondary' : 'outline'}
                             size="sm"
                             onClick={(e) => {
-                                e.stopPropagation(); // Prevent triggering li onClick/onKeyDown
-                                toggleModuleCompletion(index);
+                              e.stopPropagation(); // Prevent triggering li onClick/onKeyDown
+                              toggleModuleCompletion(index);
                             }}
                             className={`transition-colors duration-200 ${completedStatus[index] ? 'bg-green-100 hover:bg-green-200 text-green-800 border-green-200' : ''}`}
                             aria-pressed={completedStatus[index]}
                             aria-label={`Marcar Módulo ${index + 1} como ${completedStatus[index] ? 'no completado' : 'completado'}`}
                           >
                             {completedStatus[index] ? (
-                               <> <CheckCircle2 className="mr-2 h-4 w-4" /> Completado </>
+                              <> <CheckCircle2 className="mr-2 h-4 w-4" /> Completado </>
                             ) : (
-                               <> <Circle className="mr-2 h-4 w-4" /> Marcar </>
+                              <> <Circle className="mr-2 h-4 w-4" /> Marcar </>
                             )}
                           </Button>
-                      </div>
-                    </li>
-                  ))}
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <p className="text-muted-foreground text-sm">No hay módulos definidos para este curso aún.</p>
@@ -449,9 +483,9 @@ export default function CourseDetailPage() {
             <p className="text-sm text-muted-foreground">
                 {isSubCourseView
                   ? `Se muestran los cursos específicos dentro de ${course.title}. Haz clic en uno para ver sus módulos.`
-                  : `Se muestran los módulos para ${course.title}. Haz clic en un módulo con video para cargarlo. El progreso no se guarda.`
+                  : `Se muestran los módulos para ${course.title}. Haz clic en un módulo con video o enlace externo. El progreso no se guarda.`
                 }
-                 La lógica de extracción de ID de video se ha mejorado.
+                 La lógica de extracción de ID de video se ha mejorado. Se añadieron enlaces externos.
             </p>
        </div>
     </div>
