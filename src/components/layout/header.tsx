@@ -22,10 +22,11 @@ const Logo = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+// Removed Contacto from here
 const navItems = [
   { href: '/', label: 'Inicio', icon: Home },
   { href: '/cursos', label: 'Cursos', icon: BookOpen },
-  { href: '/#contacto', label: 'Contacto', icon: Mail },
+  // { href: '/#contacto', label: 'Contacto', icon: Mail }, // Removed from main nav
   { href: '/#quienes-somos', label: 'Quiénes Somos', icon: Users },
 ];
 
@@ -67,8 +68,16 @@ export function Header() {
           ))}
         </nav>
 
-        {/* Auth Buttons (Desktop) */}
+        {/* Auth & Contact Buttons (Desktop) */}
         <div className="hidden items-center gap-2 md:flex">
+          {/* Contact Button added here */}
+           <Button variant="outline" size="sm" asChild>
+              <Link href="/#contacto">
+                 <Mail className="mr-2 h-4 w-4" /> Contáctenos
+              </Link>
+           </Button>
+
+          {/* Auth Buttons */}
           {loading ? (
             <Skeleton className="h-9 w-24" /> // Show skeleton while loading auth state
           ) : user ? (
@@ -122,6 +131,18 @@ export function Header() {
                     </Link>
                  </SheetClose>
               ))}
+
+               {/* Contact Link - Added separately */}
+               <SheetClose asChild>
+                   <Link
+                      href="/#contacto"
+                      className="flex items-center gap-4 px-2.5 text-foreground/80 hover:text-foreground"
+                    >
+                      <Mail className="h-5 w-5" />
+                      Contacto
+                  </Link>
+               </SheetClose>
+
 
                {/* Auth Buttons (Mobile) */}
                <div className="mt-6 border-t pt-6 grid gap-4">
