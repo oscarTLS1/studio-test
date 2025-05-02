@@ -14,8 +14,9 @@ import { lawModules } from '../page'; // Assuming this data source is correct
 function YouTubePlayer({ videoId }: { videoId: string | null }) {
   if (!videoId) {
     return (
-      <div className="aspect-video w-full bg-muted flex items-center justify-center text-muted-foreground rounded-lg">
-        Selecciona un módulo con video para verlo aquí.
+      <div className="aspect-video w-full bg-muted flex items-center justify-center text-muted-foreground rounded-lg shadow-inner">
+        <Youtube className="h-10 w-10 mr-2 text-muted-foreground/50" />
+        <span>Selecciona un módulo con video para verlo aquí.</span>
       </div>
     );
   }
@@ -39,7 +40,7 @@ function YouTubePlayer({ videoId }: { videoId: string | null }) {
   const embedUrl = `https://www.youtube.com/embed/${extractedId}`;
 
   return (
-    <div className="aspect-video w-full overflow-hidden rounded-lg shadow-md">
+    <div className="aspect-video w-full overflow-hidden rounded-lg shadow-lg border">
       <iframe
         width="100%"
         height="100%"
@@ -77,6 +78,8 @@ export default function CourseDetailPage() {
         // Optionally, set the first video as default if available
         const firstVideoModule = foundCourse.modules?.find(m => m.videoUrl);
         setSelectedVideoUrl(firstVideoModule?.videoUrl || null);
+    } else {
+        setSelectedVideoUrl(null); // Ensure no video selected if course not found
     }
     setIsLoading(false);
    }, [id]); // Depend on id
@@ -178,36 +181,44 @@ export default function CourseDetailPage() {
                  <ListChecks className="h-5 w-5 text-accent" />
                  Módulos del Curso
               </CardTitle>
-              <CardDescription>Marca módulos como completados y selecciona un video para verlo arriba.</CardDescription>
+              <CardDescription>Haz clic en un módulo con <Youtube className="inline-block h-4 w-4 text-red-600 align-middle mx-1"/> para cargar el video. Marca los módulos como completados.</CardDescription>
             </CardHeader>
             <CardContent>
               {course.modules && course.modules.length > 0 ? (
                 <ul className="space-y-3">
                   {course.modules.map((module, index) => (
-                    <li key={index} className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-md transition-colors duration-200 ${module.videoUrl ? 'hover:bg-secondary cursor-pointer' : 'bg-secondary/30'} ${selectedVideoUrl === module.videoUrl ? 'bg-accent/20 border border-accent' : 'bg-secondary/50'}`}>
-                       <div className="flex items-center mb-2 sm:mb-0 flex-1" onClick={() => module.videoUrl && handleSelectVideo(module.videoUrl)}>
-                           {module.videoUrl && <Youtube className="h-5 w-5 mr-3 text-red-600 flex-shrink-0" />}
-                            <span className={`text-sm font-medium ${completedStatus[index] ? 'text-muted-foreground line-through' : ''} ${!module.videoUrl ? 'ml-8 sm:ml-0' : ''}`}>
+                    <li
+                        key={index}
+                        className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-md border transition-all duration-200
+                                    ${module.videoUrl ? 'hover:bg-muted/80 cursor-pointer' : 'bg-secondary/30 cursor-default'}
+                                    ${selectedVideoUrl === module.videoUrl ? 'bg-accent/20 border-accent ring-2 ring-accent/50' : 'border-border'}` // Highlight if selected
+                                }
+                        // Only attach click handler if there's a video
+                        onClick={module.videoUrl ? () => handleSelectVideo(module.videoUrl) : undefined}
+                        role={module.videoUrl ? "button" : undefined}
+                        tabIndex={module.videoUrl ? 0 : undefined}
+                        aria-label={module.videoUrl ? `Cargar video del Módulo ${index + 1}` : `Módulo ${index + 1}`}
+                    >
+                       <div className="flex items-center mb-2 sm:mb-0 flex-1">
+                           {module.videoUrl ? (
+                                <Youtube className="h-5 w-5 mr-3 text-red-600 flex-shrink-0" />
+                           ) : (
+                               <div className="w-5 h-5 mr-3 flex-shrink-0"></div> // Placeholder for alignment
+                           )}
+                            <span className={`text-sm font-medium ${completedStatus[index] ? 'text-muted-foreground line-through' : ''}`}>
                              {`Módulo ${index + 1}: ${module.title}`}
                             </span>
                        </div>
 
+                      {/* Completion Button - Stop propagation to prevent video load */}
                       <div className="flex items-center justify-end space-x-2">
-                          {/* Watch Video Button (redundant if clicking title works) */}
-                          {/* {module.videoUrl && (
-                              <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleSelectVideo(module.videoUrl)}
-                                  className={`transition-colors duration-200 ${selectedVideoUrl === module.videoUrl ? 'border-primary text-primary' : ''}`}
-                              >
-                                <Youtube className="mr-2 h-4 w-4" /> Ver Video
-                              </Button>
-                          )} */}
                           <Button
                             variant={completedStatus[index] ? 'secondary' : 'outline'}
                             size="sm"
-                            onClick={() => toggleModuleCompletion(index)}
+                            onClick={(e) => {
+                                e.stopPropagation(); // Prevent triggering li onClick
+                                toggleModuleCompletion(index);
+                            }}
                             className={`transition-colors duration-200 ${completedStatus[index] ? 'bg-green-100 hover:bg-green-200 text-green-800 border-green-200' : ''}`}
                             aria-pressed={completedStatus[index]}
                             aria-label={`Marcar Módulo ${index + 1} como ${completedStatus[index] ? 'no completado' : 'completado'}`}
@@ -267,7 +278,7 @@ export default function CourseDetailPage() {
        <div className="mt-16 p-4 border rounded-lg bg-secondary/50 text-center">
             <h3 className="font-semibold text-lg mb-2">Nota de Desarrollo</h3>
             <p className="text-sm text-muted-foreground">
-                Se ha añadido un reproductor de video de YouTube. Haz clic en el título de un módulo con video para cargarlo. El progreso sigue siendo interactivo pero no persistente.
+                Se ha añadido un reproductor de video de YouTube. Haz clic en el módulo correspondiente (con ícono <Youtube className="inline-block h-4 w-4 text-red-600 align-middle mx-1"/>) para cargarlo. El progreso sigue siendo interactivo pero no persistente.
             </p>
        </div>
     </div>
