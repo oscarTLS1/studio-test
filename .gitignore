@@ -35,8 +35,25 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# studio
-.firebase/
-*.log
-*.genkit-state.json
-*.genkit-trace.jsonl
+# Project IDX
+.idx*
+.cache
+.config
+/home/user/.cache
+/home/user/.config
+/home/user/.local
+/home/user/.npm
+/home/user/.yarn
+
+# IDEs and editors
+.idea
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-workspace
+
+# Firebase Emulators
+firebase-debug.log
+*.snapshot

@@ -74,15 +74,17 @@ export function CoursesSection() {
             </Card>
           ))}
         </div>
+         {/* Removed the "Ver Todos los Cursos" button that required login */}
+         {/*
          <div className="mt-12 text-center">
-             {/* This button correctly links to the /cursos page which lists all courses */}
              <Button size="lg" asChild>
-                <Link href="/cursos">
+                <Link href="/cursos"> // This path would eventually lead to login/course list
                     Ver Todos los Cursos
                     <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
              </Button>
          </div>
+          */}
       </div>
     </section>
   );

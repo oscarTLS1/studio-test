@@ -1,29 +1,20 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// This is a placeholder middleware. In a real application, you would implement
-// proper authentication and authorization checks here.
+// This middleware is currently disabled as authentication is handled client-side
+// within the AuthProvider and AdminLayout.
+// If server-side route protection is needed later (e.g., using cookies or tokens),
+// this file can be updated.
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  // console.log("Middleware executing for:", request.nextUrl.pathname);
 
-  // Simple check: If the path starts with /admin and there's no user session (example logic)
-  // Redirect to a login page (which doesn't exist yet)
-  const hasAuthSession = false; // Replace with your actual auth check logic
-
-  if (pathname.startsWith('/admin') && !hasAuthSession) {
-    // In a real app, you'd check for a valid session cookie or token
-    console.log('Middleware: No auth session found for admin route, redirecting (placeholder)...');
-    // const loginUrl = new URL('/login', request.url); // Create a login page later
-    // return NextResponse.redirect(loginUrl);
-     return NextResponse.next(); // Temporarily allow access for development
-  }
-
-
-  // Allow the request to proceed if it's not an admin route or if auth check passes (in future)
+  // Allow all requests to proceed for now.
   return NextResponse.next();
 }
 
-// Configure the middleware to run only on admin paths
+// Define paths where the middleware should NOT run (if needed).
+// Currently, it runs everywhere by default if not disabled.
 export const config = {
-  matcher: ['/admin/:path*'],
+  // Example: matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)']
+   matcher: [], // Disable middleware for all paths for now
 };
