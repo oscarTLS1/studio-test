@@ -115,7 +115,7 @@ interface CourseData {
   imageUrl?: string; // Optional image for sub-courses
   hint?: string; // Optional hint for images
   modules?: CourseModule[]; // Modules for regular courses or sub-courses
-  subCourses?: Omit<CourseData, 'subCourses'>[]; // Sub-courses for areas like Civil
+  subCourses?: Omit<CourseData, 'subCourses'>[]; // Sub-courses for areas like Civil or Laboral
 }
 
 
@@ -130,6 +130,7 @@ export default function CourseDetailPage() {
   const [isLoading, setIsLoading] = useState(true); // Add loading state
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null); // State for selected video
   const [isSubCourseView, setIsSubCourseView] = useState(false); // Flag to check if displaying sub-courses
+  const [parentAreaId, setParentAreaId] = useState<string | null>(null); // Track parent area ID for sub-courses
 
    // Effect to find the course based on id once params are available
    useEffect(() => {
@@ -139,16 +140,17 @@ export default function CourseDetailPage() {
     setIsLoading(true);
     let foundCourse: CourseData | undefined | null = null;
     let foundIsSubCourseView = false;
+    let foundParentAreaId: string | null = null;
 
     // Check if the ID matches a main course area
     foundCourse = lawModules.find((area) => area.id === id);
 
     if (foundCourse) {
-        // If it's 'civil', we display its sub-courses
-        if (foundCourse.id === 'civil' && foundCourse.subCourses) {
+        // If it's 'civil' or 'laboral', we display its sub-courses
+        if ((foundCourse.id === 'civil' || foundCourse.id === 'laboral') && foundCourse.subCourses) {
             foundIsSubCourseView = true;
         }
-        // If it's a normal course area (not 'civil'), prepare its modules
+        // If it's a normal course area (not 'civil' or 'laboral'), prepare its modules
         else if (foundCourse.modules) {
              // Initialize completion status based on the found course
             const initialStatus = foundCourse.modules.map(() => false);
@@ -169,19 +171,23 @@ export default function CourseDetailPage() {
              setProgressValue(0);
         }
     } else {
-        // If not found in main areas, check if the ID matches a sub-course within 'civil'
-        const civilArea = lawModules.find(area => area.id === 'civil');
-        if (civilArea?.subCourses) {
-            foundCourse = civilArea.subCourses.find(sub => sub.id === id);
-            if (foundCourse && foundCourse.modules) {
-                 // Found a sub-course, prepare its modules
-                const initialStatus = foundCourse.modules.map(() => false);
-                setCompletedStatus(initialStatus);
-                const firstVideoModule = foundCourse.modules.find(m => m.videoUrl && m.videoUrl.trim() !== '');
-                setSelectedVideoUrl(firstVideoModule?.videoUrl || null);
-                const totalModules = initialStatus.length;
-                const completedCount = initialStatus.filter(Boolean).length;
-                setProgressValue(totalModules > 0 ? Math.round((completedCount / totalModules) * 100) : 0);
+        // If not found in main areas, check if the ID matches a sub-course within 'civil' or 'laboral'
+        const areasWithSubCourses = lawModules.filter(area => area.subCourses);
+        for (const area of areasWithSubCourses) {
+            foundCourse = area.subCourses?.find(sub => sub.id === id);
+            if (foundCourse) {
+                foundParentAreaId = area.id; // Store parent ID
+                if (foundCourse.modules) {
+                    // Found a sub-course, prepare its modules
+                    const initialStatus = foundCourse.modules.map(() => false);
+                    setCompletedStatus(initialStatus);
+                    const firstVideoModule = foundCourse.modules.find(m => m.videoUrl && m.videoUrl.trim() !== '');
+                    setSelectedVideoUrl(firstVideoModule?.videoUrl || null);
+                    const totalModules = initialStatus.length;
+                    const completedCount = initialStatus.filter(Boolean).length;
+                    setProgressValue(totalModules > 0 ? Math.round((completedCount / totalModules) * 100) : 0);
+                }
+                break; // Stop searching once found
             }
         }
     }
@@ -190,9 +196,11 @@ export default function CourseDetailPage() {
     if (foundCourse) {
         setCourse(foundCourse);
         setIsSubCourseView(foundIsSubCourseView);
+        setParentAreaId(foundParentAreaId); // Set parent ID if found
     } else {
         setCourse(null); // Explicitly set to null if not found anywhere
         setIsSubCourseView(false);
+        setParentAreaId(null);
         setCompletedStatus([]);
         setSelectedVideoUrl(null);
         setProgressValue(0);
@@ -249,27 +257,33 @@ export default function CourseDetailPage() {
   // --- RENDER LOGIC ---
 
   // Common Back Button and Header
-  const renderHeader = () => (
-    <>
-      <div className="mb-8">
-        <Button variant="outline" size="sm" asChild>
-          {/* Link back to the main courses page or 'civil' if it's a sub-course */}
-          <Link href={isSubCourseView || course.id === 'civil' || !lawModules.find(m => m.id === id)?.subCourses ? '/cursos' : `/cursos/${lawModules.find(a => a.subCourses?.some(s => s.id === id))?.id || 'cursos'}`}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Volver a {isSubCourseView ? 'Áreas' : (lawModules.find(a => a.subCourses?.some(s => s.id === id))?.title || 'Áreas')}
-          </Link>
-        </Button>
-      </div>
-      <div className="mb-12">
-        <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-5xl mb-2">
-          {course.title}
-        </h1>
-        <p className="text-lg text-foreground/80 max-w-3xl">
-          {course.description}
-        </p>
-      </div>
-    </>
-  );
+  const renderHeader = () => {
+    const backLink = parentAreaId ? `/cursos/${parentAreaId}` : '/cursos';
+    const backLabel = parentAreaId
+        ? `Volver a ${lawModules.find(a => a.id === parentAreaId)?.title || 'Área'}`
+        : 'Volver a Áreas';
+
+    return (
+      <>
+        <div className="mb-8">
+          <Button variant="outline" size="sm" asChild>
+            <Link href={backLink}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {backLabel}
+            </Link>
+          </Button>
+        </div>
+        <div className="mb-12">
+          <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-5xl mb-2">
+            {course.title}
+          </h1>
+          <p className="text-lg text-foreground/80 max-w-3xl">
+            {course.description}
+          </p>
+        </div>
+      </>
+    );
+  };
 
 
   // Render Sub-Course List (Specific to 'civil' or similar structure)

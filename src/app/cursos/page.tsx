@@ -7,6 +7,7 @@ import Link from 'next/link';
 // Expanded data structure: modules are now objects with title and optional videoUrl
 // Added a real YouTube URL for demonstration purposes.
 // Restructured 'civil' to have subCourses.
+// Restructured 'laboral' to have subCourses.
 const lawModules = [
   {
     id: 'constitucional',
@@ -116,12 +117,61 @@ const lawModules = [
     description: 'Regula las relaciones entre empleadores y trabajadores, contratos y derechos laborales.',
     imageUrl: 'https://picsum.photos/400/250?random=24',
     hint: 'labor law employees working agreement',
-     modules: [
-        { title: 'Contrato de Trabajo' },
-        { title: 'Derechos y Obligaciones' },
-        { title: 'Seguridad Social', videoUrl: 'https://www.youtube.com/watch?v=12345abcde' }, // Placeholder URL
-        { title: 'Derecho Colectivo' },
-     ],
+    // Restructured 'laboral' to have subCourses
+    subCourses: [
+        {
+            id: 'colectivo',
+            title: 'Derecho Colectivo del Trabajo',
+            description: 'Estudio de las relaciones sindicales, negociación colectiva y huelga.',
+            imageUrl: 'https://picsum.photos/400/250?random=41',
+            hint: 'union workers strike negotiation',
+            modules: [
+                { title: 'Libertad Sindical', videoUrl: 'https://www.youtube.com/watch?v=lab1_mod1' },
+                { title: 'Negociación Colectiva' },
+                { title: 'Contrato Colectivo', videoUrl: 'https://www.youtube.com/watch?v=lab1_mod2' },
+                { title: 'Derecho de Huelga' },
+            ]
+        },
+        {
+            id: 'seguridad-social',
+            title: 'Derecho y Seguridad Social',
+            description: 'Análisis del sistema de seguridad social, pensiones, riesgos laborales y salud.',
+            imageUrl: 'https://picsum.photos/400/250?random=42',
+            hint: 'social security pension health insurance',
+            modules: [
+                { title: 'Principios de la Seguridad Social' },
+                { title: 'Sistema de Pensiones', videoUrl: 'https://www.youtube.com/watch?v=lab2_mod1' },
+                { title: 'Riesgos Laborales (ARL)', videoUrl: 'https://www.youtube.com/watch?v=lab2_mod2' },
+                { title: 'Sistema de Salud (EPS)' },
+            ]
+        },
+        {
+            id: 'liquidaciones',
+            title: 'Liquidaciones Laborales',
+            description: 'Cálculo de prestaciones sociales, indemnizaciones y liquidación final del contrato.',
+            imageUrl: 'https://picsum.photos/400/250?random=43',
+            hint: 'calculator money severance pay',
+            modules: [
+                { title: 'Conceptos Salariales y Prestacionales' },
+                { title: 'Liquidación de Cesantías e Intereses', videoUrl: 'https://www.youtube.com/watch?v=lab3_mod1' },
+                { title: 'Prima de Servicios y Vacaciones' },
+                { title: 'Indemnizaciones por Despido', videoUrl: 'https://www.youtube.com/watch?v=lab3_mod2' },
+            ]
+        },
+        {
+            id: 'procesal-laboral',
+            title: 'Derecho Procesal Laboral',
+            description: 'Estudio de los procedimientos judiciales en materia laboral y de seguridad social.',
+            imageUrl: 'https://picsum.photos/400/250?random=44',
+            hint: 'courtroom judge gavel legal process',
+            modules: [
+                { title: 'Principios del Proceso Laboral' },
+                { title: 'Demanda y Contestación', videoUrl: 'https://www.youtube.com/watch?v=lab4_mod1' },
+                { title: 'Audiencias y Pruebas' },
+                { title: 'Recursos Ordinarios y Extraordinarios', videoUrl: 'https://www.youtube.com/watch?v=lab4_mod2' },
+            ]
+        },
+    ],
   },
   {
     id: 'mercantil',
