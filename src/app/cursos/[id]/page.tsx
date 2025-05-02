@@ -1,40 +1,36 @@
-'use client'; // Add this directive
+'use client'; // Remains a Client Component
 
+import { useParams, notFound as navigateNotFound } from 'next/navigation'; // Import useParams
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ListChecks, CheckCircle2, Circle } from 'lucide-react'; // Added CheckCircle2 and Circle for status
+import { ArrowLeft, ListChecks, CheckCircle2, Circle } from 'lucide-react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { useState, useEffect } from 'react'; // Import useState and useEffect
+import { lawModules } from '../page'; // Assuming this data source is correct
 
-// Import the same data used on the main courses page
-// In a real app, this might be fetched from a database based on the 'id'
-import { lawModules } from '../page';
+// Remove the explicit params prop type here, useParams handles it
+export default function CourseDetailPage() {
+  const params = useParams(); // Use the hook
+  const id = params.id as string; // Get the id from the hook's result
 
-type CourseDetailPageProps = {
-  params: {
-    id: string; // The dynamic part of the URL, e.g., 'constitucional'
-  };
-};
-
-export default function CourseDetailPage({ params: { id } }: CourseDetailPageProps) {
-  // Find the course data matching the ID from the URL
-  const course = lawModules.find((module) => module.id === id);
-
-  // If no course is found for the given ID, show a 404 page
-  if (!course) {
-    notFound();
-  }
-
-  // State for module completion status
-  // Initialize with all false, length based on course modules
-  const [completedStatus, setCompletedStatus] = useState<boolean[]>(
-    () => course?.modules?.map(() => false) || []
-  );
-
-  // State for overall progress percentage
+  // State for module completion status and progress value
+  const [course, setCourse] = useState<typeof lawModules[0] | null | undefined>(undefined); // undefined initial state
+  const [completedStatus, setCompletedStatus] = useState<boolean[]>([]);
   const [progressValue, setProgressValue] = useState(0);
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
+
+   // Effect to find the course based on id once params are available
+   useEffect(() => {
+    setIsLoading(true);
+    const foundCourse = lawModules.find((module) => module.id === id);
+    setCourse(foundCourse); // Set course state
+    if (foundCourse) {
+        // Initialize completion status based on the found course
+        setCompletedStatus(foundCourse.modules?.map(() => false) || []);
+    }
+    setIsLoading(false);
+   }, [id]); // Depend on id
 
   // Function to toggle module completion
   const toggleModuleCompletion = (index: number) => {
@@ -47,6 +43,11 @@ export default function CourseDetailPage({ params: { id } }: CourseDetailPagePro
 
   // Effect to calculate progress whenever completion status changes
   useEffect(() => {
+    // Ensure course and modules exist before calculating progress
+    if (!course || !course.modules) {
+        setProgressValue(0);
+        return;
+    }
     const totalModules = completedStatus.length;
     if (totalModules === 0) {
       setProgressValue(0);
@@ -55,9 +56,37 @@ export default function CourseDetailPage({ params: { id } }: CourseDetailPagePro
     const completedCount = completedStatus.filter(Boolean).length;
     const newProgress = Math.round((completedCount / totalModules) * 100);
     setProgressValue(newProgress);
-  }, [completedStatus]);
+  }, [completedStatus, course]); // Add course dependency
 
 
+  // Handle loading state
+  if (isLoading) {
+    return (
+        <div className="container mx-auto px-4 py-16 md:px-6 md:py-24 lg:py-32 text-center">
+            Cargando detalles del curso...
+        </div>
+    );
+  }
+
+  // Handle course not found after loading
+  if (!course) {
+     // In a Client Component, you render a message or redirect.
+     return (
+        <div className="container mx-auto px-4 py-16 md:px-6 md:py-24 lg:py-32 text-center">
+            <h1 className="text-2xl font-bold text-destructive mb-4">Curso no encontrado</h1>
+            <p className="text-muted-foreground mb-6">El curso con el ID "{id}" no existe.</p>
+            <Button variant="outline" asChild>
+                <Link href="/cursos">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Volver a Cursos
+                </Link>
+            </Button>
+        </div>
+     );
+  }
+
+
+  // Render the main course detail UI
   return (
     <div className="container mx-auto px-4 py-16 md:px-6 md:py-24 lg:py-32">
       {/* Back Button */}
@@ -105,7 +134,7 @@ export default function CourseDetailPage({ params: { id } }: CourseDetailPagePro
                         size="sm"
                         onClick={() => toggleModuleCompletion(index)}
                         className={`transition-colors duration-200 ${completedStatus[index] ? 'bg-green-100 hover:bg-green-200 text-green-800 border-green-200' : ''}`}
-                        aria-pressed={completedStatus[index]} // Accessibility improvement
+                        aria-pressed={completedStatus[index]}
                         aria-label={`Marcar Módulo ${index + 1} como ${completedStatus[index] ? 'no completado' : 'completado'}`}
                       >
                         {completedStatus[index] ? (
@@ -133,14 +162,12 @@ export default function CourseDetailPage({ params: { id } }: CourseDetailPagePro
              <CardContent className="space-y-4">
                <Progress value={progressValue} aria-label={`Progreso del curso: ${progressValue}%`} />
                <p className="text-center text-sm text-muted-foreground">{progressValue}% Completado</p>
-               {/* Enable button only if not 100% complete? Or link to next module? Placeholder for now */}
                <Button className="w-full" disabled={progressValue === 100}>
                    {progressValue === 100 ? '¡Curso Completado!' : 'Continuar Aprendiendo'}
                </Button>
              </CardContent>
            </Card>
 
-           {/* Placeholder for related info or actions */}
             <Card className="bg-muted/40 border-dashed">
                 <CardHeader>
                     <CardTitle className="text-base">Recursos Adicionales</CardTitle>
@@ -152,7 +179,6 @@ export default function CourseDetailPage({ params: { id } }: CourseDetailPagePro
         </div>
       </div>
 
-       {/* Note about placeholder content */}
        <div className="mt-16 p-4 border rounded-lg bg-secondary/50 text-center">
             <h3 className="font-semibold text-lg mb-2">Nota de Desarrollo</h3>
             <p className="text-sm text-muted-foreground">
@@ -163,9 +189,10 @@ export default function CourseDetailPage({ params: { id } }: CourseDetailPagePro
   );
 }
 
-// Optional: Generate static paths if you know all possible course IDs beforehand
-// This improves performance by pre-rendering these pages at build time.
+// Optional: Generate static paths is still relevant if you want SSG for known courses
 // export async function generateStaticParams() {
+//   // This function runs at build time on the server
+//   // Fetch course IDs if dynamic, or use static list
 //   return lawModules.map((module) => ({
 //     id: module.id,
 //   }));
