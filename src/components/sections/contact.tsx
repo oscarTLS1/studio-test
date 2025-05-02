@@ -104,10 +104,12 @@ export function ContactSection() {
             from_email: values.email, // Client's email
             subject: values.subject, // Email subject line
             message: values.message, // Client's message content
-            to_email: 'sierrasanchezoscarjavier@gmail.com' // Your email address (can also be set in the template)
+            // The recipient email can be set here or preferably in the EmailJS template settings
+            to_email: 'sierrasanchezoscarjavier@gmail.com'
         };
 
-        console.log('Attempting to send email with params:', templateParams); // Debug log
+        // Log the parameters being sent to EmailJS for debugging
+        console.log('Attempting to send email with params:', templateParams);
 
         try {
             // Use emailjs.send with public key
@@ -118,18 +120,21 @@ export function ContactSection() {
               title: "Mensaje Enviado",
               description: "Gracias por contactarnos. Nos pondremos en contacto contigo pronto.",
             });
-            form.reset();
+            form.reset(); // Reset form fields after successful submission
 
         } catch (error: any) {
             console.error('EmailJS Error encountered:', error);
 
             let errorDescription = "No se pudo enviar el mensaje [Code: EMAILJS_SEND]. Inténtalo de nuevo más tarde.";
             if (error?.status && typeof error?.text === 'string') {
-                 errorDescription = `Error ${error.status}: ${error.text} [Code: EMAILJS_API]. Verifica la configuración de EmailJS (IDs, Clave Pública, Plantilla y Límites de Uso).`;
+                 // Specific API error from EmailJS
+                 errorDescription = `Error ${error.status}: ${error.text} [Code: EMAILJS_API]. Verifica la configuración de EmailJS (IDs, Clave Pública, Plantilla, Destinatario y Límites de Uso). Asegúrate que tu plantilla usa las variables correctas: {{from_name}}, {{from_email}}, {{subject}}, {{message}}.`;
                  console.error(`EmailJS API Error Details: Status=${error.status}, Text=${error.text}`);
             } else if (error instanceof Error) {
+                 // General JavaScript error
                  errorDescription = `Error: ${error.message} [Code: EMAILJS_CLIENT]. Revisa la consola del navegador para más detalles.`;
             } else {
+                 // Unknown error structure
                  errorDescription = `Ocurrió un error inesperado [Code: EMAILJS_UNKNOWN]. Revisa la consola del navegador.`;
                  console.error("Unknown EmailJS error structure:", error);
             }
@@ -284,17 +289,18 @@ export function ContactSection() {
  * 2.  **Add an Email Service:** Connect your email provider (e.g., Gmail, Outlook) in the EmailJS dashboard under "Email Services".
  * 3.  **Create an Email Template:**
  *     *   Go to "Email Templates" and create a new template.
- *     *   **Important:** Define the variables you want to receive from the form. This code uses `{{from_name}}`, `{{from_email}}`, `{{subject}}`, and `{{message}}`. Make sure your template uses these exact names within double curly braces. You can also use `{{to_email}}` if you want to set the recipient here, otherwise set it in the template settings.
- *     *   Example Template Body:
- *         ```
- *         Nuevo mensaje de contacto de: {{from_name}} ({{from_email}})
+ *     *   **Important:** Define the variables you want to receive from the form. This code sends `from_name`, `from_email`, `subject`, and `message`. Make sure your template uses these exact names within double curly braces `{{variable_name}}`.
+ *     *   Example Template Body (Make sure this matches what you need):
+ *         ```text
+ *         Nuevo mensaje de contacto de: {{from_name}}
+ *         Email: {{from_email}}
  *
  *         Asunto: {{subject}}
  *
  *         Mensaje:
  *         {{message}}
  *         ```
- *     *   In the template settings, set the recipient email address to `sierrasanchezoscarjavier@gmail.com`.
+ *     *   In the template settings on EmailJS, set the **Recipient Email Address** to `sierrasanchezoscarjavier@gmail.com` (or use the `{{to_email}}` variable if you prefer setting it in the code, though setting it in the template is often simpler).
  * 4.  **Get Your IDs and Key:**
  *     *   Find your **Service ID** on the "Email Services" page.
  *     *   Find your **Template ID** on the "Email Templates" page (the one you just created/configured).
@@ -302,12 +308,12 @@ export function ContactSection() {
  * 5.  **Configure Environment Variables:**
  *     *   Create a `.env.local` file in the root of your project (if it doesn't exist).
  *     *   Add the following lines, replacing the placeholder values with the actual IDs and Key from EmailJS:
- *       ```
+ *       ```.env.local
  *       NEXT_PUBLIC_EMAILJS_SERVICE_ID="YOUR_SERVICE_ID"
  *       NEXT_PUBLIC_EMAILJS_TEMPLATE_ID="YOUR_TEMPLATE_ID"
  *       NEXT_PUBLIC_EMAILJS_PUBLIC_KEY="YOUR_PUBLIC_KEY"
  *       ```
- *     *   **Crucially:** Prefixing with `NEXT_PUBLIC_` makes these variables accessible in the browser (client-side).
+ *     *   **Crucially:** Prefixing with `NEXT_PUBLIC_` makes these variables accessible in the browser (client-side). Do NOT store private keys here.
  * 6.  **Restart Your Development Server:** Run `npm run dev` or `yarn dev` again to load the new environment variables.
  * 7.  **Check EmailJS Account Limits:** Free accounts have monthly sending limits. Ensure you haven't exceeded them. Check the EmailJS dashboard.
  */
