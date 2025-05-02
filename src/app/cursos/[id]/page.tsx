@@ -24,16 +24,38 @@ function YouTubePlayer({ videoId }: { videoId: string | null }) {
   // Extract video ID from URL (basic implementation)
   let extractedId = videoId;
   try {
-      const url = new URL(videoId);
-      if (url.hostname.includes('youtube.com') && url.searchParams.has('v')) {
+      // Check if it's a standard YouTube URL
+      if (videoId.includes('youtube.com/watch?v=')) {
+          const url = new URL(videoId);
           extractedId = url.searchParams.get('v')!;
-      } else if (url.hostname.includes('youtu.be')) {
-          extractedId = url.pathname.substring(1);
       }
-      // Add more checks if needed for different URL formats
+      // Check if it's a YouTube Shorts URL
+      else if (videoId.includes('youtube.com/shorts/')) {
+          const parts = videoId.split('/shorts/');
+          extractedId = parts[1].split('?')[0]; // Get part after /shorts/ and before any query params
+      }
+      // Check if it's a youtu.be URL
+      else if (videoId.includes('youtu.be/')) {
+          const parts = videoId.split('youtu.be/');
+          extractedId = parts[1].split('?')[0]; // Get part after youtu.be/ and before any query params
+      }
+      // Add more checks if needed for different URL formats like embeds
+      else if (videoId.includes('youtube.com/embed/')) {
+          const parts = videoId.split('/embed/');
+          extractedId = parts[1].split('?')[0];
+      }
+      // If none of the above, maybe it's just the ID? Or invalid.
+      else if (!videoId.includes('/')) {
+         // Assume it's already an ID if no slashes are present
+         extractedId = videoId;
+      } else {
+          console.warn("Could not parse video URL, trying to use as is:", videoId);
+          // Fallback or error handling could be added here
+          // For simplicity, we'll proceed assuming it might be an ID or a different valid format YouTube accepts
+      }
   } catch (e) {
-      // If it's not a valid URL, maybe it's already an ID? Or invalid input.
-      console.warn("Could not parse video URL, assuming it's an ID:", videoId);
+      // If it's not a valid URL or parsing fails, assume it's an ID or handle error
+      console.warn("Error parsing video URL, assuming it's an ID:", videoId, e);
   }
 
 
@@ -128,18 +150,8 @@ export default function CourseDetailPage() {
   // Handle course not found after loading
   if (!course) {
      // In a Client Component, you render a message or redirect.
-     return (
-        <div className="container mx-auto px-4 py-16 md:px-6 md:py-24 lg:py-32 text-center">
-            <h1 className="text-2xl font-bold text-destructive mb-4">Curso no encontrado</h1>
-            <p className="text-muted-foreground mb-6">El curso con el ID "{id}" no existe.</p>
-            <Button variant="outline" asChild>
-                <Link href="/cursos">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Volver a Cursos
-                </Link>
-            </Button>
-        </div>
-     );
+     // Use Next.js notFound() for a standard 404 page
+     navigateNotFound(); // This will render the nearest not-found.js file
   }
 
 
@@ -181,7 +193,9 @@ export default function CourseDetailPage() {
                  <ListChecks className="h-5 w-5 text-accent" />
                  Módulos del Curso
               </CardTitle>
-              <CardDescription>Haz clic en un módulo con <Youtube className="inline-block h-4 w-4 text-red-600 align-middle mx-1"/> para cargar el video. Marca los módulos como completados.</CardDescription>
+              <CardDescription>
+                Haz clic en un módulo con el ícono <Youtube className="inline-block h-4 w-4 text-red-600 align-middle mx-1"/> para cargar el video. Usa el botón para marcar tu progreso.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {course.modules && course.modules.length > 0 ? (
@@ -197,13 +211,14 @@ export default function CourseDetailPage() {
                         onClick={module.videoUrl ? () => handleSelectVideo(module.videoUrl) : undefined}
                         role={module.videoUrl ? "button" : undefined}
                         tabIndex={module.videoUrl ? 0 : undefined}
-                        aria-label={module.videoUrl ? `Cargar video del Módulo ${index + 1}` : `Módulo ${index + 1}`}
+                        aria-label={module.videoUrl ? `Cargar video del Módulo ${index + 1}: ${module.title}` : `Módulo ${index + 1}: ${module.title}`}
+                        onKeyDown={module.videoUrl ? (e) => { if (e.key === 'Enter' || e.key === ' ') handleSelectVideo(module.videoUrl); } : undefined} // Add keyboard accessibility
                     >
-                       <div className="flex items-center mb-2 sm:mb-0 flex-1">
+                       <div className="flex items-center mb-2 sm:mb-0 flex-1 mr-4"> {/* Added mr-4 for spacing */}
                            {module.videoUrl ? (
-                                <Youtube className="h-5 w-5 mr-3 text-red-600 flex-shrink-0" />
+                                <Youtube className="h-5 w-5 mr-3 text-red-600 flex-shrink-0" aria-hidden="true" />
                            ) : (
-                               <div className="w-5 h-5 mr-3 flex-shrink-0"></div> // Placeholder for alignment
+                               <div className="w-5 h-5 mr-3 flex-shrink-0" aria-hidden="true"></div> // Placeholder for alignment
                            )}
                             <span className={`text-sm font-medium ${completedStatus[index] ? 'text-muted-foreground line-through' : ''}`}>
                              {`Módulo ${index + 1}: ${module.title}`}
@@ -211,12 +226,12 @@ export default function CourseDetailPage() {
                        </div>
 
                       {/* Completion Button - Stop propagation to prevent video load */}
-                      <div className="flex items-center justify-end space-x-2">
+                      <div className="flex items-center justify-end space-x-2 flex-shrink-0"> {/* Prevent button from shrinking */}
                           <Button
                             variant={completedStatus[index] ? 'secondary' : 'outline'}
                             size="sm"
                             onClick={(e) => {
-                                e.stopPropagation(); // Prevent triggering li onClick
+                                e.stopPropagation(); // Prevent triggering li onClick/onKeyDown
                                 toggleModuleCompletion(index);
                             }}
                             className={`transition-colors duration-200 ${completedStatus[index] ? 'bg-green-100 hover:bg-green-200 text-green-800 border-green-200' : ''}`}
@@ -278,7 +293,7 @@ export default function CourseDetailPage() {
        <div className="mt-16 p-4 border rounded-lg bg-secondary/50 text-center">
             <h3 className="font-semibold text-lg mb-2">Nota de Desarrollo</h3>
             <p className="text-sm text-muted-foreground">
-                Se ha añadido un reproductor de video de YouTube. Haz clic en el módulo correspondiente (con ícono <Youtube className="inline-block h-4 w-4 text-red-600 align-middle mx-1"/>) para cargarlo. El progreso sigue siendo interactivo pero no persistente.
+                Se ha añadido un reproductor de video de YouTube. Haz clic en el módulo correspondiente (con ícono <Youtube className="inline-block h-4 w-4 text-red-600 align-middle mx-1"/>) para cargarlo. El progreso se actualiza al marcar módulos como completados, pero no se guarda entre visitas.
             </p>
        </div>
     </div>
