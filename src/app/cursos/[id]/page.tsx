@@ -21,43 +21,67 @@ function YouTubePlayer({ videoId }: { videoId: string | null }) {
     );
   }
 
-  // Extract video ID from URL (basic implementation)
-  let extractedId = videoId;
-  try {
-      // Check if it's a standard YouTube URL
-      if (videoId.includes('youtube.com/watch?v=')) {
-          const url = new URL(videoId);
-          extractedId = url.searchParams.get('v')!;
-      }
-      // Check if it's a YouTube Shorts URL
-      else if (videoId.includes('youtube.com/shorts/')) {
-          const parts = videoId.split('/shorts/');
-          extractedId = parts[1].split('?')[0]; // Get part after /shorts/ and before any query params
-      }
-      // Check if it's a youtu.be URL
-      else if (videoId.includes('youtu.be/')) {
-          const parts = videoId.split('youtu.be/');
-          extractedId = parts[1].split('?')[0]; // Get part after youtu.be/ and before any query params
-      }
-      // Add more checks if needed for different URL formats like embeds
-      else if (videoId.includes('youtube.com/embed/')) {
-          const parts = videoId.split('/embed/');
-          extractedId = parts[1].split('?')[0];
-      }
-      // If none of the above, maybe it's just the ID? Or invalid.
-      else if (!videoId.includes('/')) {
-         // Assume it's already an ID if no slashes are present
-         extractedId = videoId;
-      } else {
-          console.warn("Could not parse video URL, trying to use as is:", videoId);
-          // Fallback or error handling could be added here
-          // For simplicity, we'll proceed assuming it might be an ID or a different valid format YouTube accepts
-      }
-  } catch (e) {
-      // If it's not a valid URL or parsing fails, assume it's an ID or handle error
-      console.warn("Error parsing video URL, assuming it's an ID:", videoId, e);
-  }
+  // Function to extract YouTube video ID from various URL formats
+  const extractVideoID = (url: string): string | null => {
+      if (!url) return null;
+      let videoID: string | null = null;
+      try {
+          // Standard watch URL: https://www.youtube.com/watch?v=VIDEO_ID
+          if (url.includes('youtube.com/watch?v=')) {
+              const urlObj = new URL(url);
+              videoID = urlObj.searchParams.get('v');
+          }
+          // Shorts URL: https://www.youtube.com/shorts/VIDEO_ID
+          else if (url.includes('youtube.com/shorts/')) {
+              const parts = url.split('/shorts/');
+              videoID = parts[1]?.split('?')[0]; // Get part after /shorts/ and before any query params
+          }
+          // Shortened youtu.be URL: https://youtu.be/VIDEO_ID
+          else if (url.includes('youtu.be/')) {
+              const parts = url.split('youtu.be/');
+              videoID = parts[1]?.split('?')[0]; // Get part after youtu.be/ and before any query params
+          }
+          // Embed URL: https://www.youtube.com/embed/VIDEO_ID
+          else if (url.includes('youtube.com/embed/')) {
+              const parts = url.split('/embed/');
+              videoID = parts[1]?.split('?')[0];
+          }
+          // If it looks like just an ID (no slashes, no query params)
+          else if (!url.includes('/') && !url.includes('?') && url.length > 5) { // Basic check for ID-like string
+             videoID = url;
+          }
 
+          // Basic validation for common ID patterns (alphanumeric, underscore, hyphen)
+          if (videoID && /^[a-zA-Z0-9_-]{11}$/.test(videoID)) {
+              return videoID;
+          } else {
+              console.warn("Extracted string doesn't look like a standard YouTube ID:", videoID);
+              // Fallback: If we couldn't extract a standard ID, maybe the input *was* the ID?
+              // Or perhaps return null if strict parsing is needed.
+              // Let's try returning the initial non-null extraction if validation fails, might still work in some cases.
+              return videoID || null;
+          }
+
+      } catch (e) {
+          console.error("Error parsing video URL:", url, e);
+          // If parsing fails, it might be just the ID or invalid. Return null.
+          return null;
+      }
+  };
+
+
+  const extractedId = extractVideoID(videoId);
+
+  // Handle cases where ID extraction failed
+  if (!extractedId) {
+      return (
+          <div className="aspect-video w-full bg-destructive/10 flex flex-col items-center justify-center text-destructive rounded-lg shadow-inner p-4">
+              <Youtube className="h-10 w-10 mr-2 text-destructive/50" />
+              <span>Error al cargar el video.</span>
+              <span className="text-xs mt-1 text-center">No se pudo extraer un ID válido de la URL: {videoId}</span>
+          </div>
+      );
+  }
 
   const embedUrl = `https://www.youtube.com/embed/${extractedId}`;
 
@@ -91,26 +115,53 @@ export default function CourseDetailPage() {
 
    // Effect to find the course based on id once params are available
    useEffect(() => {
+    // Avoid unnecessary state updates if already loading or ID hasn't changed relevantly
+    if (isLoading === false && course?.id === id) return;
+
     setIsLoading(true);
     const foundCourse = lawModules.find((module) => module.id === id);
-    setCourse(foundCourse); // Set course state
+
     if (foundCourse) {
+        setCourse(foundCourse); // Set course state
         // Initialize completion status based on the found course
-        setCompletedStatus(foundCourse.modules?.map(() => false) || []);
+        const initialStatus = foundCourse.modules?.map(() => false) || [];
+        setCompletedStatus(initialStatus);
         // Optionally, set the first video as default if available
         const firstVideoModule = foundCourse.modules?.find(m => m.videoUrl);
         setSelectedVideoUrl(firstVideoModule?.videoUrl || null);
+        // Initialize progress based on initial status
+        const totalModules = initialStatus.length;
+        const completedCount = initialStatus.filter(Boolean).length;
+        setProgressValue(totalModules > 0 ? Math.round((completedCount / totalModules) * 100) : 0);
     } else {
+        setCourse(null); // Explicitly set to null if not found
+        setCompletedStatus([]);
         setSelectedVideoUrl(null); // Ensure no video selected if course not found
+        setProgressValue(0);
     }
     setIsLoading(false);
-   }, [id]); // Depend on id
+   }, [id, isLoading, course?.id]); // Depend on id and loading state
+
 
   // Function to toggle module completion
   const toggleModuleCompletion = (index: number) => {
     setCompletedStatus((prevStatus) => {
       const newStatus = [...prevStatus];
       newStatus[index] = !newStatus[index];
+
+      // Calculate progress after status update
+       if (course && course.modules) {
+            const totalModules = newStatus.length;
+            if (totalModules > 0) {
+                const completedCount = newStatus.filter(Boolean).length;
+                setProgressValue(Math.round((completedCount / totalModules) * 100));
+            } else {
+                setProgressValue(0);
+            }
+        } else {
+           setProgressValue(0);
+        }
+
       return newStatus;
     });
   };
@@ -120,26 +171,11 @@ export default function CourseDetailPage() {
       setSelectedVideoUrl(videoUrl || null);
   }
 
-  // Effect to calculate progress whenever completion status changes
-  useEffect(() => {
-    // Ensure course and modules exist before calculating progress
-    if (!course || !course.modules) {
-        setProgressValue(0);
-        return;
-    }
-    const totalModules = completedStatus.length;
-    if (totalModules === 0) {
-      setProgressValue(0);
-      return;
-    }
-    const completedCount = completedStatus.filter(Boolean).length;
-    const newProgress = Math.round((completedCount / totalModules) * 100);
-    setProgressValue(newProgress);
-  }, [completedStatus, course]); // Add course dependency
+  // Removed the redundant progress calculation useEffect as it's handled in toggleModuleCompletion
 
 
   // Handle loading state
-  if (isLoading) {
+  if (isLoading || course === undefined) { // Check for undefined initial state too
     return (
         <div className="container mx-auto px-4 py-16 md:px-6 md:py-24 lg:py-32 text-center">
             Cargando detalles del curso...
@@ -293,7 +329,7 @@ export default function CourseDetailPage() {
        <div className="mt-16 p-4 border rounded-lg bg-secondary/50 text-center">
             <h3 className="font-semibold text-lg mb-2">Nota de Desarrollo</h3>
             <p className="text-sm text-muted-foreground">
-                Se ha añadido un reproductor de video de YouTube. Haz clic en el módulo correspondiente (con ícono <Youtube className="inline-block h-4 w-4 text-red-600 align-middle mx-1"/>) para cargarlo. El progreso se actualiza al marcar módulos como completados, pero no se guarda entre visitas.
+                Se ha añadido un reproductor de video de YouTube. Haz clic en el módulo correspondiente (con ícono <Youtube className="inline-block h-4 w-4 text-red-600 align-middle mx-1"/>) para cargarlo. El progreso se actualiza al marcar módulos como completados, pero no se guarda entre visitas. La lógica de extracción de ID de video se ha mejorado.
             </p>
        </div>
     </div>

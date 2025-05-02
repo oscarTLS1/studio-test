@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 // Expanded data structure: modules are now objects with title and optional videoUrl
+// Added a real YouTube URL for demonstration purposes.
 const lawModules = [
   {
     id: 'constitucional',
@@ -13,7 +14,7 @@ const lawModules = [
     imageUrl: 'https://picsum.photos/400/250?random=20',
     hint: 'constitution law government building',
     modules: [
-        { title: 'Introducción', videoUrl: 'https://www.youtube.com/watch?v=zY6z2WZ__44' },
+        { title: 'Introducción', videoUrl: 'https://www.youtube.com/watch?v=Kzi1LR6k_ak' }, // Example real URL
         { title: 'Principios Fundamentales' }, // No video example
         { title: 'Derechos Humanos', videoUrl: 'https://www.youtube.com/watch?v=MI9a_7g9JUs' },
         { title: 'Control Constitucional' },
