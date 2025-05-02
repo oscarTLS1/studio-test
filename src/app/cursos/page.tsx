@@ -8,6 +8,7 @@ import Link from 'next/link';
 // Added a real YouTube URL for demonstration purposes.
 // Restructured 'civil' to have subCourses.
 // Restructured 'laboral' to have subCourses.
+// Restructured 'administrativo' to have subCourses.
 const lawModules = [
   {
     id: 'constitucional',
@@ -214,11 +215,63 @@ const lawModules = [
     description: 'Aborda la organización, funcionamiento y control de la administración pública.',
     imageUrl: 'https://picsum.photos/400/250?random=26',
     hint: 'administrative law government office public service',
-    modules: [
-        { title: 'Acto Administrativo', videoUrl: 'https://www.youtube.com/watch?v=klmno54321' }, // Placeholder URL
-        { title: 'Procedimiento Administrativo' },
-        { title: 'Contratación Pública' },
-        { title: 'Responsabilidad Estatal' },
+    // Restructured 'administrativo' to have subCourses
+    subCourses: [
+      {
+        id: 'acto-administrativo',
+        title: 'Acto Administrativo',
+        description: 'Estudio de la naturaleza, elementos, validez y efectos de los actos emitidos por la administración.',
+        imageUrl: 'https://picsum.photos/400/250?random=51',
+        hint: 'government document stamp official',
+        modules: [
+          { title: 'Concepto y Elementos', videoUrl: 'https://www.youtube.com/watch?v=adm1_mod1' },
+          { title: 'Clases de Actos Administrativos' },
+          { title: 'Validez y Eficacia', videoUrl: 'https://www.youtube.com/watch?v=adm1_mod2' },
+          { title: 'Vicios y Nulidades' },
+          { title: 'Revocación Directa', externalLink: 'https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=41249' },
+        ]
+      },
+      {
+        id: 'procedimiento-administrativo',
+        title: 'Procedimiento Administrativo',
+        description: 'Análisis de las normas que rigen la actuación de la administración pública (CPACA).',
+        imageUrl: 'https://picsum.photos/400/250?random=52',
+        hint: 'flowchart legal process bureaucracy',
+        modules: [
+          { title: 'Principios Rectores', externalLink: 'https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=41249#3' },
+          { title: 'Derecho de Petición', videoUrl: 'https://www.youtube.com/watch?v=adm2_mod1' },
+          { title: 'Procedimiento General', videoUrl: 'https://www.youtube.com/watch?v=adm2_mod2' },
+          { title: 'Silencio Administrativo', externalLink: 'https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=41249#83'},
+          { title: 'Recursos (Reposición, Apelación, Queja)' , externalLink: 'https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=41249#74'},
+        ]
+      },
+      {
+        id: 'contratacion-publica',
+        title: 'Contratación Pública',
+        description: 'Estudio del régimen legal para la adquisición de bienes y servicios por entidades estatales.',
+        imageUrl: 'https://picsum.photos/400/250?random=53',
+        hint: 'public contract infrastructure building',
+        modules: [
+          { title: 'Principios de la Contratación', videoUrl: 'https://www.youtube.com/watch?v=adm3_mod1' },
+          { title: 'Modalidades de Selección', externalLink: 'https://colombiacompra.gov.co/manuales/manual-contratacion' }, // Placeholder link
+          { title: 'Etapas Contractuales (Precontractual, Contractual, Postcontractual)'},
+          { title: 'Supervisión e Interventoría', videoUrl: 'https://www.youtube.com/watch?v=adm3_mod2' },
+          { title: 'Régimen Sancionatorio' },
+        ]
+      },
+      {
+        id: 'responsabilidad-estatal',
+        title: 'Responsabilidad Patrimonial del Estado',
+        description: 'Análisis de los eventos en que el Estado debe indemnizar por daños causados.',
+        imageUrl: 'https://picsum.photos/400/250?random=54',
+        hint: 'scales of justice broken bridge liability',
+        modules: [
+          { title: 'Fundamentos Constitucionales y Legales', videoUrl: 'https://www.youtube.com/watch?v=adm4_mod1' },
+          { title: 'Elementos de la Responsabilidad (Daño, Imputación, Nexo Causal)'},
+          { title: 'Regímenes (Falla del Servicio, Riesgo Excepcional, Daño Especial)', videoUrl: 'https://www.youtube.com/watch?v=adm4_mod2'},
+          { title: 'Medios de Control (Reparación Directa)' , externalLink: 'https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=41249#140'},
+        ]
+      },
     ],
   },
   {

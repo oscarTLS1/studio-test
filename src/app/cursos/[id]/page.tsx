@@ -147,11 +147,11 @@ export default function CourseDetailPage() {
     foundCourse = lawModules.find((area) => area.id === id);
 
     if (foundCourse) {
-        // If it's 'civil' or 'laboral', we display its sub-courses
-        if ((foundCourse.id === 'civil' || foundCourse.id === 'laboral') && foundCourse.subCourses) {
+        // If it's 'civil', 'laboral', or 'administrativo', we display its sub-courses
+        if ((foundCourse.id === 'civil' || foundCourse.id === 'laboral' || foundCourse.id === 'administrativo') && foundCourse.subCourses) {
             foundIsSubCourseView = true;
         }
-        // If it's a normal course area (not 'civil' or 'laboral'), prepare its modules
+        // If it's a normal course area, prepare its modules
         else if (foundCourse.modules) {
              // Initialize completion status based on the found course
             const initialStatus = foundCourse.modules.map(() => false);
@@ -172,7 +172,7 @@ export default function CourseDetailPage() {
              setProgressValue(0);
         }
     } else {
-        // If not found in main areas, check if the ID matches a sub-course within 'civil' or 'laboral'
+        // If not found in main areas, check if the ID matches a sub-course within relevant areas
         const areasWithSubCourses = lawModules.filter(area => area.subCourses);
         for (const area of areasWithSubCourses) {
             foundCourse = area.subCourses?.find(sub => sub.id === id);
@@ -491,5 +491,3 @@ export default function CourseDetailPage() {
     </div>
   );
 }
-
-    
