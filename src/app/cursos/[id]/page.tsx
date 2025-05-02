@@ -1,16 +1,17 @@
+// src/app/cursos/[id]/page.tsx
 'use client'; // Remains a Client Component
 
 import { useParams, notFound as navigateNotFound } from 'next/navigation'; // Import useParams
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ListChecks, CheckCircle2, Circle, Youtube } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image'; // Import Image for sub-course display
 import { lawModules } from '../page'; // Assuming this data source is correct
 
-// YouTube Player Component (Simple iframe wrapper)
-// In a real app, consider using a library like react-youtube for better control
+// YouTube Player Component (remains the same)
 function YouTubePlayer({ videoId }: { videoId: string | null }) {
   if (!videoId) {
     return (
@@ -100,17 +101,35 @@ function YouTubePlayer({ videoId }: { videoId: string | null }) {
 }
 
 
-// Remove the explicit params prop type here, useParams handles it
+// Type for a single course or sub-course module
+interface CourseModule {
+  title: string;
+  videoUrl?: string; // Optional video URL
+}
+
+// Type for a course area (like Constitucional, Penal) or a sub-course (like Personas y Familia)
+interface CourseData {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl?: string; // Optional image for sub-courses
+  hint?: string; // Optional hint for images
+  modules?: CourseModule[]; // Modules for regular courses or sub-courses
+  subCourses?: Omit<CourseData, 'subCourses'>[]; // Sub-courses for areas like Civil
+}
+
+
 export default function CourseDetailPage() {
   const params = useParams(); // Use the hook
   const id = params.id as string; // Get the id from the hook's result
 
   // State for module completion status and progress value
-  const [course, setCourse] = useState<typeof lawModules[0] | null | undefined>(undefined); // undefined initial state
+  const [course, setCourse] = useState<CourseData | null | undefined>(undefined); // undefined initial state
   const [completedStatus, setCompletedStatus] = useState<boolean[]>([]);
   const [progressValue, setProgressValue] = useState(0);
   const [isLoading, setIsLoading] = useState(true); // Add loading state
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null); // State for selected video
+  const [isSubCourseView, setIsSubCourseView] = useState(false); // Flag to check if displaying sub-courses
 
    // Effect to find the course based on id once params are available
    useEffect(() => {
@@ -118,28 +137,67 @@ export default function CourseDetailPage() {
     if (isLoading === false && course?.id === id) return;
 
     setIsLoading(true);
-    const foundCourse = lawModules.find((module) => module.id === id);
+    let foundCourse: CourseData | undefined | null = null;
+    let foundIsSubCourseView = false;
+
+    // Check if the ID matches a main course area
+    foundCourse = lawModules.find((area) => area.id === id);
 
     if (foundCourse) {
-        setCourse(foundCourse); // Set course state
-        // Initialize completion status based on the found course
-        const initialStatus = foundCourse.modules?.map(() => false) || [];
-        setCompletedStatus(initialStatus);
+        // If it's 'civil', we display its sub-courses
+        if (foundCourse.id === 'civil' && foundCourse.subCourses) {
+            foundIsSubCourseView = true;
+        }
+        // If it's a normal course area (not 'civil'), prepare its modules
+        else if (foundCourse.modules) {
+             // Initialize completion status based on the found course
+            const initialStatus = foundCourse.modules.map(() => false);
+            setCompletedStatus(initialStatus);
 
-        // Find the first module that *has* a videoUrl and set it as default
-        const firstVideoModule = foundCourse.modules?.find(m => m.videoUrl && m.videoUrl.trim() !== '');
-        setSelectedVideoUrl(firstVideoModule?.videoUrl || null); // Set null if no module has a video initially
+            // Find the first module that *has* a videoUrl and set it as default
+            const firstVideoModule = foundCourse.modules.find(m => m.videoUrl && m.videoUrl.trim() !== '');
+            setSelectedVideoUrl(firstVideoModule?.videoUrl || null); // Set null if no module has a video initially
 
-        // Initialize progress based on initial status
-        const totalModules = initialStatus.length;
-        const completedCount = initialStatus.filter(Boolean).length;
-        setProgressValue(totalModules > 0 ? Math.round((completedCount / totalModules) * 100) : 0);
+            // Initialize progress based on initial status
+            const totalModules = initialStatus.length;
+            const completedCount = initialStatus.filter(Boolean).length;
+            setProgressValue(totalModules > 0 ? Math.round((completedCount / totalModules) * 100) : 0);
+        } else {
+             // Course area exists but has neither modules nor subCourses (edge case)
+             setCompletedStatus([]);
+             setSelectedVideoUrl(null);
+             setProgressValue(0);
+        }
     } else {
-        setCourse(null); // Explicitly set to null if not found
+        // If not found in main areas, check if the ID matches a sub-course within 'civil'
+        const civilArea = lawModules.find(area => area.id === 'civil');
+        if (civilArea?.subCourses) {
+            foundCourse = civilArea.subCourses.find(sub => sub.id === id);
+            if (foundCourse && foundCourse.modules) {
+                 // Found a sub-course, prepare its modules
+                const initialStatus = foundCourse.modules.map(() => false);
+                setCompletedStatus(initialStatus);
+                const firstVideoModule = foundCourse.modules.find(m => m.videoUrl && m.videoUrl.trim() !== '');
+                setSelectedVideoUrl(firstVideoModule?.videoUrl || null);
+                const totalModules = initialStatus.length;
+                const completedCount = initialStatus.filter(Boolean).length;
+                setProgressValue(totalModules > 0 ? Math.round((completedCount / totalModules) * 100) : 0);
+            }
+        }
+    }
+
+    // Update state after checks
+    if (foundCourse) {
+        setCourse(foundCourse);
+        setIsSubCourseView(foundIsSubCourseView);
+    } else {
+        setCourse(null); // Explicitly set to null if not found anywhere
+        setIsSubCourseView(false);
         setCompletedStatus([]);
-        setSelectedVideoUrl(null); // Ensure no video selected if course not found
+        setSelectedVideoUrl(null);
         setProgressValue(0);
     }
+
     setIsLoading(false);
    }, [id, isLoading, course?.id]); // Depend on id and loading state
 
@@ -172,8 +230,6 @@ export default function CourseDetailPage() {
       setSelectedVideoUrl(videoUrl || null);
   }
 
-  // Removed the redundant progress calculation useEffect as it's handled in toggleModuleCompletion
-
 
   // Handle loading state
   if (isLoading || course === undefined) { // Check for undefined initial state too
@@ -186,26 +242,24 @@ export default function CourseDetailPage() {
 
   // Handle course not found after loading
   if (!course) {
-     // In a Client Component, you render a message or redirect.
      // Use Next.js notFound() for a standard 404 page
      navigateNotFound(); // This will render the nearest not-found.js file
   }
 
+  // --- RENDER LOGIC ---
 
-  // Render the main course detail UI
-  return (
-    <div className="container mx-auto px-4 py-16 md:px-6 md:py-24 lg:py-32">
-      {/* Back Button */}
+  // Common Back Button and Header
+  const renderHeader = () => (
+    <>
       <div className="mb-8">
         <Button variant="outline" size="sm" asChild>
-          <Link href="/cursos">
+          {/* Link back to the main courses page or 'civil' if it's a sub-course */}
+          <Link href={isSubCourseView || course.id === 'civil' || !lawModules.find(m => m.id === id)?.subCourses ? '/cursos' : `/cursos/${lawModules.find(a => a.subCourses?.some(s => s.id === id))?.id || 'cursos'}`}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Volver a Áreas
+            Volver a {isSubCourseView ? 'Áreas' : (lawModules.find(a => a.subCourses?.some(s => s.id === id))?.title || 'Áreas')}
           </Link>
         </Button>
       </div>
-
-      {/* Course Header */}
       <div className="mb-12">
         <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-5xl mb-2">
           {course.title}
@@ -214,7 +268,46 @@ export default function CourseDetailPage() {
           {course.description}
         </p>
       </div>
+    </>
+  );
 
+
+  // Render Sub-Course List (Specific to 'civil' or similar structure)
+  const renderSubCourseList = () => (
+     <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+        {course.subCourses?.map((subCourse) => (
+            <Link key={subCourse.id} href={`/cursos/${subCourse.id}`} className="group block">
+                 <Card className="flex h-full flex-col overflow-hidden rounded-lg shadow-lg transition-transform duration-300 group-hover:scale-[1.02] group-hover:shadow-xl">
+                 <CardHeader className="p-0">
+                     <div className="relative h-48 w-full">
+                        <Image
+                         src={subCourse.imageUrl || 'https://picsum.photos/400/250?random=50'} // Default placeholder
+                         alt={subCourse.title}
+                         layout="fill"
+                         objectFit="cover"
+                         data-ai-hint={subCourse.hint || 'law study book'}
+                         />
+                     </div>
+                 </CardHeader>
+                 <CardContent className="flex flex-grow flex-col justify-between p-6">
+                     <div>
+                         <CardTitle className="mb-2 text-xl font-semibold">{subCourse.title}</CardTitle>
+                         <CardDescription className="text-foreground/80">{subCourse.description}</CardDescription>
+                     </div>
+                 </CardContent>
+                  <CardFooter className="p-6 pt-0">
+                     <span className="text-sm text-primary group-hover:underline">Ver módulos del curso</span>
+                  </CardFooter>
+                 </Card>
+            </Link>
+        ))}
+     </div>
+  );
+
+
+  // Render Module List and Progress (For regular courses or sub-courses)
+  const renderModuleView = () => (
+    <>
         {/* Video Player Area */}
       <div className="mb-12">
            <YouTubePlayer videoId={selectedVideoUrl} />
@@ -326,22 +419,29 @@ export default function CourseDetailPage() {
             </Card>
         </div>
       </div>
+    </>
+  );
+
+
+  // Render the main course detail UI
+  return (
+    <div className="container mx-auto px-4 py-16 md:px-6 md:py-24 lg:py-32">
+        {renderHeader()}
+
+        {isSubCourseView ? renderSubCourseList() : renderModuleView()}
 
        <div className="mt-16 p-4 border rounded-lg bg-secondary/50 text-center">
             <h3 className="font-semibold text-lg mb-2">Nota de Desarrollo</h3>
             <p className="text-sm text-muted-foreground">
-                Se ha añadido un reproductor de video de YouTube. Haz clic en el módulo correspondiente (con ícono <Youtube className="inline-block h-4 w-4 text-red-600 align-middle mx-1"/>) para cargarlo. El progreso se actualiza al marcar módulos como completados, pero no se guarda entre visitas. La lógica de extracción de ID de video se ha mejorado.
+                {isSubCourseView
+                  ? `Se muestran los cursos específicos dentro de ${course.title}. Haz clic en uno para ver sus módulos.`
+                  : `Se muestran los módulos para ${course.title}. Haz clic en un módulo con video para cargarlo. El progreso no se guarda.`
+                }
+                 La lógica de extracción de ID de video se ha mejorado.
             </p>
        </div>
     </div>
   );
 }
 
-// Optional: Generate static paths is still relevant if you want SSG for known courses
-// export async function generateStaticParams() {
-//   // This function runs at build time on the server
-//   // Fetch course IDs if dynamic, or use static list
-//   return lawModules.map((module) => ({
-//     id: module.id,
-//   }));
-// }
+    

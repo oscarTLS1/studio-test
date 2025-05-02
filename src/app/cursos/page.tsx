@@ -6,6 +6,7 @@ import Link from 'next/link';
 
 // Expanded data structure: modules are now objects with title and optional videoUrl
 // Added a real YouTube URL for demonstration purposes.
+// Restructured 'civil' to have subCourses.
 const lawModules = [
   {
     id: 'constitucional',
@@ -26,12 +27,62 @@ const lawModules = [
     description: 'Aborda las relaciones entre particulares: contratos, familia, propiedad y sucesiones.',
     imageUrl: 'https://picsum.photos/400/250?random=21',
     hint: 'family law property contract signing',
-    modules: [
-        { title: 'Personas y Familia', videoUrl: 'https://www.youtube.com/watch?v=abcdef12345' }, // Placeholder URL
-        { title: 'Bienes y Propiedad' },
-        { title: 'Obligaciones y Contratos', videoUrl: 'https://www.youtube.com/watch?v=ghijkl67890' }, // Placeholder URL
-        { title: 'Sucesiones' },
-    ],
+    // 'civil' now lists sub-courses instead of direct modules
+    subCourses: [
+      {
+        id: 'personas-y-familia',
+        title: 'Personas y Familia',
+        description: 'Conceptos fundamentales sobre la persona, el matrimonio, parentesco y filiación.',
+        imageUrl: 'https://picsum.photos/400/250?random=31',
+        hint: 'family parents children',
+        modules: [
+          { title: 'Concepto de Persona', videoUrl: 'https://www.youtube.com/watch?v=civ1_mod1' },
+          { title: 'Atributos de la Personalidad', videoUrl: 'https://www.youtube.com/watch?v=civ1_mod2' },
+          { title: 'El Matrimonio' },
+          { title: 'Parentesco y Filiación' },
+        ]
+      },
+      {
+        id: 'bienes-y-propiedad',
+        title: 'Bienes y Propiedad',
+        description: 'Estudio de los diferentes tipos de bienes y los derechos reales sobre ellos.',
+        imageUrl: 'https://picsum.photos/400/250?random=32',
+        hint: 'property house keys land',
+        modules: [
+          { title: 'Clasificación de los Bienes' },
+          { title: 'Derecho de Propiedad', videoUrl: 'https://www.youtube.com/watch?v=civ2_mod1' },
+          { title: 'Posesión y Usucapión', videoUrl: 'https://www.youtube.com/watch?v=civ2_mod2' },
+          { title: 'Derechos Reales de Goce' },
+        ]
+      },
+      {
+        id: 'obligaciones-y-contratos',
+        title: 'Obligaciones y Contratos',
+        description: 'Análisis de las fuentes de las obligaciones y los principales tipos de contratos civiles.',
+        imageUrl: 'https://picsum.photos/400/250?random=33',
+        hint: 'contract signing document agreement',
+        modules: [
+          { title: 'Teoría General de las Obligaciones', videoUrl: 'https://www.youtube.com/watch?v=civ3_mod1' },
+          { title: 'Fuentes de las Obligaciones' },
+          { title: 'Contratos Preparatorios', videoUrl: 'https://www.youtube.com/watch?v=civ3_mod2' },
+          { title: 'Contratos Traslativos de Dominio' },
+          { title: 'Contratos de Prestación de Servicios' },
+        ]
+      },
+      {
+        id: 'sucesiones',
+        title: 'Sucesiones',
+        description: 'Regulación de la transmisión de bienes y derechos por causa de muerte.',
+        imageUrl: 'https://picsum.photos/400/250?random=34',
+        hint: 'inheritance will testament family tree',
+        modules: [
+          { title: 'Sucesión Testamentaria', videoUrl: 'https://www.youtube.com/watch?v=civ4_mod1' },
+          { title: 'Sucesión Legítima (Intestada)' },
+          { title: 'El Testamento', videoUrl: 'https://www.youtube.com/watch?v=civ4_mod2' },
+          { title: 'Albaceas e Interventores' },
+        ]
+      },
+    ]
   },
   {
     id: 'penal',
@@ -126,7 +177,7 @@ const lawModules = [
   },
 ];
 
-// This page displays the list of all available course modules/areas
+// This page displays the list of all available course areas
 export default function CursosPage() {
   return (
     <div className="container mx-auto px-4 py-16 md:px-6 md:py-24 lg:py-32">
@@ -147,7 +198,7 @@ export default function CursosPage() {
           Explora las principales ramas del derecho que abordamos en nuestros servicios y programas formativos. Haz clic en un área para ver los detalles.
         </p>
       </div>
-      {/* Updated Grid for Law Modules */}
+      {/* Updated Grid for Law Modules/Areas */}
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
         {lawModules.map((module) => (
           <Link key={module.id} href={`/cursos/${module.id}`} className="group block">
@@ -185,3 +236,5 @@ export default function CursosPage() {
 }
 // Added this export to satisfy Next.js convention, though data is static here
 export { lawModules };
+
+    
