@@ -1,5 +1,5 @@
 // src/app/cursos/[id]/page.tsx
-'use client'; // Remains a Client Component
+'use client'; // Requires client-side interaction for state, effects, auth, and data fetching
 
 import { useParams, notFound as navigateNotFound } from 'next/navigation'; // Import useParams
 import { useState, useEffect } from 'react';
@@ -10,6 +10,10 @@ import { ArrowLeft, ListChecks, CheckCircle2, Circle, Youtube, Link as LinkExter
 import Link from 'next/link';
 import Image from 'next/image'; // Import Image for sub-course display
 import { lawModules } from '../page'; // Assuming this data source is correct
+import { useAuth } from '@/context/AuthContext'; // Import Auth context
+import { doc, getDoc, setDoc } from 'firebase/firestore'; // Firestore functions
+import { db } from '@/lib/firebase/config'; // Firestore instance
+import { useQuery, useMutation, QueryClient, QueryClientProvider } from '@tanstack/react-query'; // React Query for data fetching/mutation
 
 // YouTube Player Component (remains the same)
 function YouTubePlayer({ videoId }: { videoId: string | null }) {
@@ -119,23 +123,83 @@ interface CourseData {
   subCourses?: Omit<CourseData, 'subCourses'>[]; // Sub-courses for areas like Civil or Laboral
 }
 
+// Type for user progress data stored in Firestore
+interface UserProgress {
+    completedModules: boolean[];
+    lastAccessed?: number; // Timestamp
+}
 
-export default function CourseDetailPage() {
+// Fetch user progress from Firestore
+const fetchUserProgress = async (userId: string, courseId: string): Promise<UserProgress | null> => {
+    if (!userId) return null; // No user logged in
+    const progressRef = doc(db, 'userProgress', userId, 'courses', courseId);
+    const docSnap = await getDoc(progressRef);
+    if (docSnap.exists()) {
+        return docSnap.data() as UserProgress;
+    }
+    return null; // No progress found for this user/course
+};
+
+// Save user progress to Firestore
+const saveUserProgress = async ({ userId, courseId, progressData }: { userId: string; courseId: string; progressData: UserProgress }) => {
+    if (!userId) throw new Error("User not logged in");
+    const progressRef = doc(db, 'userProgress', userId, 'courses', courseId);
+    await setDoc(progressRef, progressData, { merge: true }); // Use merge to avoid overwriting other fields if any
+};
+
+// --- React Query Client ---
+const queryClient = new QueryClient();
+
+// Wrap the main component export with QueryClientProvider
+export default function CourseDetailPageWrapper() {
+    return (
+        <QueryClientProvider client={queryClient}>
+            <CourseDetailPage />
+        </QueryClientProvider>
+    );
+}
+
+
+// --- Main Component ---
+function CourseDetailPage() {
   const params = useParams(); // Use the hook
   const id = params.id as string; // Get the id from the hook's result
+  const { user, loading: authLoading } = useAuth(); // Get user and loading state from Auth context
 
   // State for module completion status and progress value
   const [course, setCourse] = useState<CourseData | null | undefined>(undefined); // undefined initial state
   const [completedStatus, setCompletedStatus] = useState<boolean[]>([]);
   const [progressValue, setProgressValue] = useState(0);
-  const [isLoading, setIsLoading] = useState(true); // Add loading state
+  const [isLoading, setIsLoading] = useState(true); // Loading state for course data finding
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null); // State for selected video
   const [isSubCourseView, setIsSubCourseView] = useState(false); // Flag to check if displaying sub-courses
   const [parentAreaId, setParentAreaId] = useState<string | null>(null); // Track parent area ID for sub-courses
 
-   // Effect to find the course based on id once params are available
+  // --- React Query for User Progress ---
+  const { data: userProgress, isLoading: progressLoading, refetch: refetchProgress } = useQuery({
+      queryKey: ['userProgress', user?.uid, id], // Query key includes user ID and course ID
+      queryFn: () => fetchUserProgress(user!.uid, id),
+      enabled: !!user && !authLoading && course !== undefined, // Only run query if user is logged in, auth finished, and course data identified
+      staleTime: 5 * 60 * 1000, // Cache progress for 5 minutes
+  });
+
+  // --- React Query Mutation for Saving Progress ---
+  const mutation = useMutation({
+      mutationFn: saveUserProgress,
+      onSuccess: () => {
+          // Optionally invalidate and refetch progress after saving, though local state update might be sufficient
+          // queryClient.invalidateQueries({ queryKey: ['userProgress', user?.uid, id] });
+          console.log("Progress saved successfully.");
+      },
+      onError: (error) => {
+          console.error("Error saving progress:", error);
+          // Optionally show a toast message to the user
+      },
+  });
+
+
+   // Effect to find the course data based on id
    useEffect(() => {
-    // Avoid unnecessary state updates if already loading or ID hasn't changed relevantly
     if (isLoading === false && course?.id === id) return;
 
     setIsLoading(true);
@@ -143,95 +207,100 @@ export default function CourseDetailPage() {
     let foundIsSubCourseView = false;
     let foundParentAreaId: string | null = null;
 
-    // Check if the ID matches a main course area
+    // Logic to find the course (remains the same)
     foundCourse = lawModules.find((area) => area.id === id);
-
     if (foundCourse) {
-        // If it's 'civil', 'laboral', or 'administrativo', we display its sub-courses
         if ((foundCourse.id === 'civil' || foundCourse.id === 'laboral' || foundCourse.id === 'administrativo') && foundCourse.subCourses) {
             foundIsSubCourseView = true;
-        }
-        // If it's a normal course area, prepare its modules
-        else if (foundCourse.modules) {
-             // Initialize completion status based on the found course
-            const initialStatus = foundCourse.modules.map(() => false);
-            setCompletedStatus(initialStatus);
-
-            // Find the first module that *has* a videoUrl and set it as default
-            const firstVideoModule = foundCourse.modules.find(m => m.videoUrl && m.videoUrl.trim() !== '');
-            setSelectedVideoUrl(firstVideoModule?.videoUrl || null); // Set null if no module has a video initially
-
-            // Initialize progress based on initial status
-            const totalModules = initialStatus.length;
-            const completedCount = initialStatus.filter(Boolean).length;
-            setProgressValue(totalModules > 0 ? Math.round((completedCount / totalModules) * 100) : 0);
-        } else {
-             // Course area exists but has neither modules nor subCourses (edge case)
-             setCompletedStatus([]);
-             setSelectedVideoUrl(null);
-             setProgressValue(0);
+        } else if (foundCourse.modules) {
+             // Select first video initially if no progress loaded yet
+             const firstVideoModule = foundCourse.modules.find(m => m.videoUrl && m.videoUrl.trim() !== '');
+             setSelectedVideoUrl(firstVideoModule?.videoUrl || null);
         }
     } else {
-        // If not found in main areas, check if the ID matches a sub-course within relevant areas
         const areasWithSubCourses = lawModules.filter(area => area.subCourses);
         for (const area of areasWithSubCourses) {
             foundCourse = area.subCourses?.find(sub => sub.id === id);
             if (foundCourse) {
-                foundParentAreaId = area.id; // Store parent ID
+                foundParentAreaId = area.id;
                 if (foundCourse.modules) {
-                    // Found a sub-course, prepare its modules
-                    const initialStatus = foundCourse.modules.map(() => false);
-                    setCompletedStatus(initialStatus);
                     const firstVideoModule = foundCourse.modules.find(m => m.videoUrl && m.videoUrl.trim() !== '');
                     setSelectedVideoUrl(firstVideoModule?.videoUrl || null);
-                    const totalModules = initialStatus.length;
-                    const completedCount = initialStatus.filter(Boolean).length;
-                    setProgressValue(totalModules > 0 ? Math.round((completedCount / totalModules) * 100) : 0);
                 }
-                break; // Stop searching once found
+                break;
             }
         }
     }
 
-    // Update state after checks
+    // Update course state
     if (foundCourse) {
         setCourse(foundCourse);
         setIsSubCourseView(foundIsSubCourseView);
-        setParentAreaId(foundParentAreaId); // Set parent ID if found
+        setParentAreaId(foundParentAreaId);
     } else {
-        setCourse(null); // Explicitly set to null if not found anywhere
+        setCourse(null);
         setIsSubCourseView(false);
         setParentAreaId(null);
-        setCompletedStatus([]);
-        setSelectedVideoUrl(null);
+    }
+    setIsLoading(false);
+   }, [id, course?.id]); // Simplified dependency array
+
+    // Effect to initialize completion status from Firestore or default
+   useEffect(() => {
+       if (!course || !course.modules || progressLoading || authLoading) return; // Wait for course, modules, and loading states
+
+       let initialStatus: boolean[];
+       if (user && userProgress) {
+           // User logged in and progress data loaded
+           initialStatus = userProgress.completedModules || course.modules.map(() => false);
+           // Ensure the loaded status array matches the number of modules
+           if (initialStatus.length !== course.modules.length) {
+               console.warn("Mismatch between loaded progress and course modules. Resetting progress.");
+               initialStatus = course.modules.map(() => false);
+           }
+       } else {
+           // User not logged in or no progress data found, use default (all false)
+           initialStatus = course.modules.map(() => false);
+       }
+
+       setCompletedStatus(initialStatus);
+
+       // Calculate initial progress based on the status
+       const totalModules = initialStatus.length;
+       const completedCount = initialStatus.filter(Boolean).length;
+       setProgressValue(totalModules > 0 ? Math.round((completedCount / totalModules) * 100) : 0);
+
+   }, [course, user, userProgress, progressLoading, authLoading]);
+
+
+  // Function to toggle module completion and save progress
+  const toggleModuleCompletion = (index: number) => {
+    if (!course || !course.modules) return;
+
+    const newStatus = [...completedStatus];
+    newStatus[index] = !newStatus[index];
+    setCompletedStatus(newStatus); // Update local state immediately for UI responsiveness
+
+     // Calculate and update progress value
+    const totalModules = newStatus.length;
+    if (totalModules > 0) {
+        const completedCount = newStatus.filter(Boolean).length;
+        setProgressValue(Math.round((completedCount / totalModules) * 100));
+    } else {
         setProgressValue(0);
     }
 
-    setIsLoading(false);
-   }, [id, isLoading, course?.id]); // Depend on id and loading state
-
-
-  // Function to toggle module completion
-  const toggleModuleCompletion = (index: number) => {
-    setCompletedStatus((prevStatus) => {
-      const newStatus = [...prevStatus];
-      newStatus[index] = !newStatus[index];
-
-      // Calculate progress after status update
-       if (course && course.modules) {
-            const totalModules = newStatus.length;
-            if (totalModules > 0) {
-                const completedCount = newStatus.filter(Boolean).length;
-                setProgressValue(Math.round((completedCount / totalModules) * 100));
-            } else {
-                setProgressValue(0);
-            }
-        } else {
-           setProgressValue(0);
-        }
-
-      return newStatus;
-    });
+    // Save progress to Firestore if user is logged in
+    if (user) {
+        const progressData: UserProgress = {
+            completedModules: newStatus,
+            lastAccessed: Date.now(),
+        };
+        mutation.mutate({ userId: user.uid, courseId: id, progressData });
+    } else {
+        console.log("User not logged in. Progress not saved.");
+        // Optionally, you could store progress in localStorage for anonymous users
+    }
   };
 
   // Function to handle video selection
@@ -247,19 +316,20 @@ export default function CourseDetailPage() {
   };
 
 
-  // Handle loading state
-  if (isLoading || course === undefined) { // Check for undefined initial state too
+  // Handle loading states (Auth, Course finding, Progress fetching)
+  const combinedLoading = isLoading || authLoading || (user && progressLoading);
+  if (combinedLoading || course === undefined) {
     return (
         <div className="container mx-auto px-4 py-16 md:px-6 md:py-24 lg:py-32 text-center">
-            Cargando detalles del curso...
+            Cargando...
+             {/* You could add a spinner here */}
         </div>
     );
   }
 
   // Handle course not found after loading
   if (!course) {
-     // Use Next.js notFound() for a standard 404 page
-     navigateNotFound(); // This will render the nearest not-found.js file
+     navigateNotFound(); // Use Next.js notFound() for a standard 404 page
   }
 
   // --- RENDER LOGIC ---
@@ -347,6 +417,7 @@ export default function CourseDetailPage() {
               </CardTitle>
               <CardDescription>
                  Haz clic en un módulo con <Youtube className="inline-block h-4 w-4 text-red-600 align-middle mx-1"/> para cargar el video, o con <LinkExternal className="inline-block h-4 w-4 text-blue-600 align-middle mx-1"/> para abrir el contenido externo. Usa el botón para marcar tu progreso.
+                 {!user && !authLoading && <span className="text-sm text-amber-600 block mt-1"> (Inicia sesión para guardar tu progreso)</span>}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -357,6 +428,8 @@ export default function CourseDetailPage() {
                     const hasExternalLink = !!module.externalLink;
                     const isClickable = hasVideo || hasExternalLink;
                     const isSelectedVideo = hasVideo && selectedVideoUrl === module.videoUrl;
+                    // Safely access completedStatus[index]
+                    const isCompleted = completedStatus?.[index] ?? false;
 
                     const handleClick = () => {
                       if (hasVideo) {
@@ -397,7 +470,7 @@ export default function CourseDetailPage() {
                           ) : (
                             <div className="w-5 h-5 mr-3 flex-shrink-0" aria-hidden="true"></div> // Placeholder for alignment
                           )}
-                          <span className={`text-sm font-medium ${completedStatus[index] ? 'text-muted-foreground line-through' : ''}`}>
+                          <span className={`text-sm font-medium ${isCompleted ? 'text-muted-foreground line-through' : ''}`}>
                             {`Módulo ${index + 1}: ${module.title}`}
                           </span>
                         </div>
@@ -405,17 +478,18 @@ export default function CourseDetailPage() {
                         {/* Completion Button - Stop propagation to prevent video/link activation */}
                         <div className="flex items-center justify-end space-x-2 flex-shrink-0"> {/* Prevent button from shrinking */}
                           <Button
-                            variant={completedStatus[index] ? 'secondary' : 'outline'}
+                            variant={isCompleted ? 'secondary' : 'outline'}
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation(); // Prevent triggering li onClick/onKeyDown
                               toggleModuleCompletion(index);
                             }}
-                            className={`transition-colors duration-200 ${completedStatus[index] ? 'bg-green-100 hover:bg-green-200 text-green-800 border-green-200' : ''}`}
-                            aria-pressed={completedStatus[index]}
-                            aria-label={`Marcar Módulo ${index + 1} como ${completedStatus[index] ? 'no completado' : 'completado'}`}
+                            className={`transition-colors duration-200 ${isCompleted ? 'bg-green-100 hover:bg-green-200 text-green-800 border-green-200' : ''}`}
+                            aria-pressed={isCompleted}
+                            aria-label={`Marcar Módulo ${index + 1} como ${isCompleted ? 'no completado' : 'completado'}`}
+                             // disabled={!user} // Optionally disable if user not logged in
                           >
-                            {completedStatus[index] ? (
+                            {isCompleted ? (
                               <> <CheckCircle2 className="mr-2 h-4 w-4" /> Completado </>
                             ) : (
                               <> <Circle className="mr-2 h-4 w-4" /> Marcar </>
@@ -441,10 +515,11 @@ export default function CourseDetailPage() {
              </CardHeader>
              <CardContent className="space-y-4">
                <Progress value={progressValue} aria-label={`Progreso del curso: ${progressValue}%`} />
-               <p className="text-center text-sm text-muted-foreground">{progressValue}% Completado</p>
-               <Button className="w-full" disabled={progressValue === 100}>
-                   {progressValue === 100 ? '¡Curso Completado!' : 'Continuar Aprendiendo'}
+               <p className="text-center text-sm text-muted-foreground">{progressValue}% Completado {mutation.isPending ? "(Guardando...)" : ""}{mutation.isError ? "(Error al guardar)" : ""}</p>
+               <Button className="w-full" disabled={progressValue === 100 || mutation.isPending}>
+                   {progressValue === 100 ? '¡Curso Completado!' : (mutation.isPending ? 'Guardando Progreso...' : 'Continuar Aprendiendo')}
                </Button>
+                {!user && !authLoading && <p className="text-xs text-center text-amber-600 mt-1">Inicia sesión para guardar tu progreso.</p>}
              </CardContent>
            </Card>
 
@@ -483,9 +558,8 @@ export default function CourseDetailPage() {
             <p className="text-sm text-muted-foreground">
                 {isSubCourseView
                   ? `Se muestran los cursos específicos dentro de ${course.title}. Haz clic en uno para ver sus módulos.`
-                  : `Se muestran los módulos para ${course.title}. Haz clic en un módulo con video o enlace externo. El progreso no se guarda.`
+                  : `Se muestran los módulos para ${course.title}. ${user ? 'Tu progreso se guarda automáticamente.' : 'Inicia sesión para guardar el progreso.'}`
                 }
-                 La lógica de extracción de ID de video se ha mejorado. Se añadieron enlaces externos.
             </p>
        </div>
     </div>
