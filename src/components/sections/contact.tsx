@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,6 +29,11 @@ const formSchema = z.object({
   }),
   email: z.string().email({
     message: 'Por favor, introduce una dirección de correo electrónico válida.',
+  }),
+  phone: z.string().min(7, { // Added phone field
+    message: 'El teléfono debe tener al menos 7 dígitos.',
+  }).regex(/^[0-9+\-\s()]*$/, { // Basic regex for digits, +, -, spaces, ()
+      message: 'Por favor, introduce un número de teléfono válido.',
   }),
   subject: z.string().min(5, {
     message: 'El asunto debe tener al menos 5 caracteres.',
@@ -71,6 +77,7 @@ export function ContactSection() {
         defaultValues: {
         name: '',
         email: '',
+        phone: '', // Added default value for phone
         subject: '',
         message: '',
         },
@@ -99,9 +106,11 @@ export function ContactSection() {
         // Prepare template parameters matching your EmailJS template
         // This object includes all the form fields to be sent in the email.
         // Ensure your EmailJS template uses these variable names (e.g., {{from_name}}, {{from_email}}, etc.)
+        // **IMPORTANT**: You MUST add {{phone}} to your EmailJS template for the phone number to appear.
         const templateParams = {
             from_name: values.name, // Client's name
             from_email: values.email, // Client's email
+            phone: values.phone, // Client's phone number (NEW)
             subject: values.subject, // Email subject line
             message: values.message, // Client's message content
             // The recipient email can be set here or preferably in the EmailJS template settings
@@ -128,7 +137,7 @@ export function ContactSection() {
             let errorDescription = "No se pudo enviar el mensaje [Code: EMAILJS_SEND]. Inténtalo de nuevo más tarde.";
             if (error?.status && typeof error?.text === 'string') {
                  // Specific API error from EmailJS
-                 errorDescription = `Error ${error.status}: ${error.text} [Code: EMAILJS_API]. Verifica la configuración de EmailJS (IDs, Clave Pública, Plantilla, Destinatario y Límites de Uso). Asegúrate que tu plantilla usa las variables correctas: {{from_name}}, {{from_email}}, {{subject}}, {{message}}.`;
+                 errorDescription = `Error ${error.status}: ${error.text} [Code: EMAILJS_API]. Verifica la configuración de EmailJS (IDs, Clave Pública, Plantilla, Destinatario y Límites de Uso). Asegúrate que tu plantilla usa las variables correctas: {{from_name}}, {{from_email}}, {{phone}}, {{subject}}, {{message}}.`;
                  console.error(`EmailJS API Error Details: Status=${error.status}, Text=${error.text}`);
             } else if (error instanceof Error) {
                  // General JavaScript error
@@ -180,7 +189,8 @@ export function ContactSection() {
                     <Mail className="mt-1 h-5 w-5 flex-shrink-0 text-accent" />
                     <div>
                     <h4 className="font-medium text-foreground">Correo Electrónico</h4>
-                    <a href="mailto:info@lexconnect.com" className="hover:text-accent">info@lexconnect.com</a>
+                    {/* Make sure this email matches the one configured in EmailJS if not using template {{to_email}} */}
+                    <a href="mailto:sierrasanchezoscarjavier@gmail.com" className="hover:text-accent">sierrasanchezoscarjavier@gmail.com</a>
                     </div>
                 </div>
                 <div className="flex items-start gap-4">
@@ -238,6 +248,19 @@ export function ContactSection() {
                         </FormItem>
                         )}
                     />
+                     <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Teléfono</FormLabel>
+                            <FormControl>
+                            <Input type="tel" placeholder="Tu número de teléfono" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
                     <FormField
                         control={form.control}
                         name="subject"
@@ -289,11 +312,12 @@ export function ContactSection() {
  * 2.  **Add an Email Service:** Connect your email provider (e.g., Gmail, Outlook) in the EmailJS dashboard under "Email Services".
  * 3.  **Create an Email Template:**
  *     *   Go to "Email Templates" and create a new template.
- *     *   **Important:** Define the variables you want to receive from the form. This code sends `from_name`, `from_email`, `subject`, and `message`. Make sure your template uses these exact names within double curly braces `{{variable_name}}`.
+ *     *   **Important:** Define the variables you want to receive from the form. This code now sends `from_name`, `from_email`, `phone`, `subject`, and `message`. Make sure your template uses these exact names within double curly braces `{{variable_name}}`.
  *     *   Example Template Body (Make sure this matches what you need):
  *         ```text
  *         Nuevo mensaje de contacto de: {{from_name}}
  *         Email: {{from_email}}
+ *         Teléfono: {{phone}}
  *
  *         Asunto: {{subject}}
  *
@@ -317,3 +341,5 @@ export function ContactSection() {
  * 6.  **Restart Your Development Server:** Run `npm run dev` or `yarn dev` again to load the new environment variables.
  * 7.  **Check EmailJS Account Limits:** Free accounts have monthly sending limits. Ensure you haven't exceeded them. Check the EmailJS dashboard.
  */
+
+    
