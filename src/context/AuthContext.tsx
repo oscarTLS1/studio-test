@@ -74,6 +74,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Don't render children until loading is false to prevent flash of unauthenticated content
+  // You might want a more sophisticated loading state indicator (e.g., a spinner)
   return (
     <AuthContext.Provider value={value}>
       {!loading && children}

@@ -4,30 +4,73 @@ import Image from 'next/image';
 import { BookOpen, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
-// Sample data - in a real app, this would come from a database/CMS
-const coursesData = [
+// Data structure for law areas and their sub-courses/modules
+const lawModules = [
   {
-    id: 1,
-    title: 'Introducción al Derecho Corporativo',
-    description: 'Aprende los fundamentos legales esenciales para la gestión empresarial.',
-    imageUrl: 'https://picsum.photos/400/250?random=1',
-    hint: 'law study',
+    id: 'constitucional',
+    title: 'Derecho Constitucional',
+    description: 'Entiende la estructura y los principios fundamentales del gobierno y la constitución.',
+    imageUrl: 'https://picsum.photos/400/250?random=20',
+    hint: 'constitution law government building',
   },
   {
-    id: 2,
-    title: 'Derecho Laboral para Empleadores',
-    description: 'Navega las complejidades de la legislación laboral y evita contingencias.',
-    imageUrl: 'https://picsum.photos/400/250?random=2',
-    hint: 'legal documents',
+    id: 'civil',
+    title: 'Derecho Civil',
+    description: 'Aborda las relaciones entre particulares: contratos, familia, propiedad y sucesiones.',
+    imageUrl: 'https://picsum.photos/400/250?random=21',
+    hint: 'family law property contract signing',
   },
   {
-    id: 3,
-    title: 'Protección de Datos Personales',
-    description: 'Cumple con la normativa vigente y protege la información sensible.',
-    imageUrl: 'https://picsum.photos/400/250?random=3',
-    hint: 'data privacy lock',
+    id: 'penal',
+    title: 'Derecho Penal',
+    description: 'Estudia las leyes, procedimientos y consecuencias relacionadas con los delitos.',
+    imageUrl: 'https://picsum.photos/400/250?random=22',
+    hint: 'criminal law gavel handcuffs',
+  },
+  {
+    id: 'procesal',
+    title: 'Derecho Procesal',
+    description: 'Comprende los procedimientos y trámites legales en las distintas ramas del Derecho.',
+    imageUrl: 'https://picsum.photos/400/250?random=23',
+    hint: 'legal procedure document flowchart',
+  },
+  {
+    id: 'laboral',
+    title: 'Derecho Laboral',
+    description: 'Regula las relaciones entre empleadores y trabajadores, contratos y derechos laborales.',
+    imageUrl: 'https://picsum.photos/400/250?random=24',
+    hint: 'labor law employees working agreement',
+  },
+  {
+    id: 'mercantil',
+    title: 'Derecho Mercantil',
+    description: 'Estudia las leyes que rigen el comercio, las empresas y las sociedades mercantiles.',
+    imageUrl: 'https://picsum.photos/400/250?random=25',
+    hint: 'commercial law business handshake graph',
+  },
+  {
+    id: 'administrativo',
+    title: 'Derecho Administrativo',
+    description: 'Aborda la organización, funcionamiento y control de la administración pública.',
+    imageUrl: 'https://picsum.photos/400/250?random=26',
+    hint: 'administrative law government office public service',
+  },
+  {
+    id: 'internacional',
+    title: 'Derecho Internacional',
+    description: 'Estudia las normas y principios que regulan las relaciones entre Estados y organizaciones.',
+    imageUrl: 'https://picsum.photos/400/250?random=27',
+    hint: 'international law flags globe handshake',
+  },
+  {
+    id: 'ambiental',
+    title: 'Derecho Ambiental',
+    description: 'Se enfoca en las leyes para la protección del medio ambiente y los recursos naturales.',
+    imageUrl: 'https://picsum.photos/400/250?random=28',
+    hint: 'environmental law nature green energy',
   },
 ];
+
 
 export function CoursesSection() {
   return (
@@ -41,8 +84,9 @@ export function CoursesSection() {
             Amplía tus conocimientos legales con nuestros cursos diseñados por expertos.
           </p>
         </div>
+        {/* Display first 3 courses as previews */}
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {coursesData.map((course) => (
+          {lawModules.slice(0, 3).map((course) => (
             <Card key={course.id} className="flex flex-col overflow-hidden rounded-lg shadow-lg transition-shadow duration-300 hover:shadow-xl">
               <CardHeader className="p-0">
                 <div className="relative h-48 w-full">
@@ -64,8 +108,8 @@ export function CoursesSection() {
               </CardContent>
                <CardFooter className="p-6 pt-0">
                  <Button variant="outline" className="w-full" asChild>
-                    {/* This button now links to the main /cursos page */}
-                    <Link href="/cursos">
+                    {/* Link to the specific course detail page */}
+                    <Link href={`/cursos/${course.id}`}>
                         <BookOpen className="mr-2 h-4 w-4" />
                         Ver Detalles del Curso
                     </Link>
@@ -74,17 +118,15 @@ export function CoursesSection() {
             </Card>
           ))}
         </div>
-         {/* Removed the "Ver Todos los Cursos" button that required login */}
-         {/*
+         {/* Restore the "Ver Todos los Cursos" button */}
          <div className="mt-12 text-center">
              <Button size="lg" asChild>
-                <Link href="/cursos"> // This path would eventually lead to login/course list
+                <Link href="/cursos"> {/* Links to the main courses page */}
                     Ver Todos los Cursos
                     <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
              </Button>
          </div>
-          */}
       </div>
     </section>
   );

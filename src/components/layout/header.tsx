@@ -1,8 +1,13 @@
+'use client'; // Header needs client-side interaction for auth state and mobile menu
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet'; // Added SheetClose
-import { Menu, Home, BookOpen, Mail, Users, Scale } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Menu, Home, BookOpen, Mail, Users, LogIn, LogOut, User } from 'lucide-react'; // Added LogIn, LogOut, User icons
 import type { SVGProps } from 'react';
+import { useAuth } from '@/context/AuthContext'; // Import useAuth hook
+import { useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton'; // For loading state
 
 // Placeholder Logo Component
 const Logo = (props: SVGProps<SVGSVGElement>) => (
@@ -17,15 +22,28 @@ const Logo = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-
 const navItems = [
-  { href: '/', label: 'Inicio', icon: Home }, // Use '/' for homepage link
-  { href: '/cursos', label: 'Cursos', icon: BookOpen }, // Updated link
-  { href: '/#contacto', label: 'Contacto', icon: Mail }, // Keep anchor link for sections on homepage
-  { href: '/#quienes-somos', label: 'Quiénes Somos', icon: Users }, // Keep anchor link
+  { href: '/', label: 'Inicio', icon: Home },
+  { href: '/cursos', label: 'Cursos', icon: BookOpen },
+  { href: '/#contacto', label: 'Contacto', icon: Mail },
+  { href: '/#quienes-somos', label: 'Quiénes Somos', icon: Users },
 ];
 
 export function Header() {
+  const { user, logout, loading } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Optionally redirect to homepage or login page after logout
+      router.push('/');
+    } catch (error) {
+      console.error("Failed to log out:", error);
+      // Optionally show an error toast
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
@@ -41,21 +59,42 @@ export function Header() {
               key={item.href}
               href={item.href}
               className="flex items-center gap-1 text-foreground/80 transition-colors hover:text-foreground"
-              prefetch={item.href.startsWith('/')} // Prefetch only internal pages
+              prefetch={item.href.startsWith('/')}
             >
-              <item.icon className="h-4 w-4" />
+              {/* No icons in desktop nav for cleaner look, adjust if needed */}
               {item.label}
             </Link>
           ))}
         </nav>
 
-        {/* CTA Button (Desktop) */}
-        <div className="hidden md:block">
-          <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <Link href="/#contacto">Contáctenos</Link>
-          </Button>
+        {/* Auth Buttons (Desktop) */}
+        <div className="hidden items-center gap-2 md:flex">
+          {loading ? (
+            <Skeleton className="h-9 w-24" /> // Show skeleton while loading auth state
+          ) : user ? (
+            <>
+              {/* Optional: Link to a profile or dashboard page */}
+              {/* <Button variant="ghost" size="sm" asChild>
+                 <Link href="/profile">
+                   <User className="mr-2 h-4 w-4" /> Perfil
+                 </Link>
+               </Button> */}
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" /> Cerrar Sesión
+              </Button>
+            </>
+          ) : (
+            <Button asChild size="sm">
+              <Link href="/login">
+                <LogIn className="mr-2 h-4 w-4" /> Iniciar Sesión
+              </Link>
+            </Button>
+            // Optional: Add a Sign Up button
+            // <Button variant="outline" size="sm" asChild>
+            //   <Link href="/signup">Crear Cuenta</Link>
+            // </Button>
+          )}
         </div>
-
 
         {/* Mobile Navigation */}
         <Sheet>
@@ -66,8 +105,7 @@ export function Header() {
             </Button>
           </SheetTrigger>
           <SheetContent side="right">
-            {/* Close sheet on navigation */}
-             <Link href="/" className="flex items-center gap-2 mb-8 px-2.5" aria-label="LexConnect Home">
+            <Link href="/" className="flex items-center gap-2 mb-8 px-2.5" aria-label="LexConnect Home">
                  <Logo />
                  <span className="text-xl font-bold text-primary">LexConnect</span>
              </Link>
@@ -84,11 +122,35 @@ export function Header() {
                     </Link>
                  </SheetClose>
               ))}
-               <SheetClose asChild>
-                   <Button asChild size="lg" className="mt-4 bg-accent text-accent-foreground hover:bg-accent/90">
-                     <Link href="/#contacto">Contáctenos</Link>
-                    </Button>
-               </SheetClose>
+
+               {/* Auth Buttons (Mobile) */}
+               <div className="mt-6 border-t pt-6 grid gap-4">
+                  {loading ? (
+                     <Skeleton className="h-10 w-full" />
+                  ) : user ? (
+                      <SheetClose asChild>
+                         <Button variant="outline" onClick={handleLogout} className="justify-start gap-4 px-2.5">
+                           <LogOut className="h-5 w-5" /> Cerrar Sesión
+                         </Button>
+                      </SheetClose>
+                  ) : (
+                     <SheetClose asChild>
+                         <Button asChild className="justify-start gap-4 px-2.5">
+                             <Link href="/login">
+                                <LogIn className="h-5 w-5" /> Iniciar Sesión
+                             </Link>
+                         </Button>
+                     </SheetClose>
+                     // Optional: Add Sign Up for mobile
+                    //  <SheetClose asChild>
+                    //      <Button variant="outline" asChild className="justify-start gap-4 px-2.5">
+                    //          <Link href="/signup">
+                    //              <UserPlus className="h-5 w-5" /> Crear Cuenta
+                    //          </Link>
+                    //      </Button>
+                    //  </SheetClose>
+                  )}
+               </div>
             </nav>
           </SheetContent>
         </Sheet>

@@ -41,9 +41,10 @@ export default function LoginPage() {
       await login(data.email, data.password);
       toast({
         title: 'Inicio de Sesión Exitoso',
-        description: 'Redirigiendo al panel de administración...',
+        description: 'Redirigiendo...',
       });
-      router.push('/admin/dashboard'); // Redirect to admin dashboard on successful login
+      // Redirect to the courses page or a protected dashboard after successful login
+      router.push('/cursos'); // Or '/admin/dashboard' if that's preferred
     } catch (error: any) {
       console.error("Login failed:", error);
       let errorMessage = 'Ocurrió un error al iniciar sesión.';
@@ -68,7 +69,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-primary">Iniciar Sesión</CardTitle>
-          <CardDescription>Accede al panel de administración</CardDescription>
+          <CardDescription>Accede para ver nuestros cursos</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -104,7 +105,13 @@ export default function LoginPage() {
               </Button>
             </form>
           </Form>
-           {/* Optional: Add "Forgot Password?" link here later */}
+           {/* Optional: Add "Forgot Password?" or "Create Account" link here later */}
+           {/* <div className="mt-4 text-center text-sm">
+               ¿No tienes cuenta?{' '}
+               <Link href="/signup" className="underline text-primary hover:text-primary/80">
+                 Crear Cuenta
+               </Link>
+           </div> */}
         </CardContent>
       </Card>
     </div>
