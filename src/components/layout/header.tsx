@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet'; // Make sure SheetClose is imported
 import { Menu, Home, BookOpen, Mail, Users, LogIn, LogOut, User } from 'lucide-react'; // Added LogIn, LogOut, User icons
 import type { SVGProps } from 'react';
 import { useAuth } from '@/context/AuthContext'; // Import useAuth hook
@@ -22,11 +22,10 @@ const Logo = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-// Removed Contacto from here
+// Restore the navigation items
 const navItems = [
   { href: '/', label: 'Inicio', icon: Home },
   { href: '/cursos', label: 'Cursos', icon: BookOpen },
-  // { href: '/#contacto', label: 'Contacto', icon: Mail }, // Removed from main nav
   { href: '/#quienes-somos', label: 'Quiénes Somos', icon: Users },
 ];
 
@@ -70,14 +69,7 @@ export function Header() {
 
         {/* Auth & Contact Buttons (Desktop) */}
         <div className="hidden items-center gap-2 md:flex">
-          {/* Contact Button added here */}
-           <Button variant="outline" size="sm" asChild>
-              <Link href="/#contacto">
-                 <Mail className="mr-2 h-4 w-4" /> Contáctenos
-              </Link>
-           </Button>
-
-          {/* Auth Buttons */}
+           {/* Auth Buttons */}
           {loading ? (
             <Skeleton className="h-9 w-24" /> // Show skeleton while loading auth state
           ) : user ? (
@@ -103,6 +95,13 @@ export function Header() {
             //   <Link href="/signup">Crear Cuenta</Link>
             // </Button>
           )}
+
+           {/* Contact Button added here */}
+           <Button variant="outline" size="sm" asChild>
+              <Link href="/#contacto">
+                 <Mail className="mr-2 h-4 w-4" /> Contáctenos
+              </Link>
+           </Button>
         </div>
 
         {/* Mobile Navigation */}
