@@ -39,7 +39,7 @@ function AdminSidebar() {
                 </Link>
                 <Link href="/admin/courses" className="flex items-center gap-2 p-2 rounded hover:bg-muted">
                     <BookOpen className="h-4 w-4" />
-                    <span>Cursos</span>
+                    <span>Cursos</span> {/* This now correctly links to the courses list */}
                 </Link>
                 <Link href="/admin/content" className="flex items-center gap-2 p-2 rounded hover:bg-muted">
                     <FileText className="h-4 w-4" />
