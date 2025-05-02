@@ -165,10 +165,12 @@ const lawModules = [
             imageUrl: 'https://picsum.photos/400/250?random=44',
             hint: 'courtroom judge gavel legal process',
             modules: [
-                { title: 'Principios del Proceso Laboral' },
-                { title: 'Demanda y Contestación', videoUrl: 'https://www.youtube.com/watch?v=lab4_mod1' },
-                { title: 'Audiencias y Pruebas' },
-                { title: 'Recursos Ordinarios y Extraordinarios', videoUrl: 'https://www.youtube.com/watch?v=lab4_mod2' },
+                { title: 'Principios Generales y Competencia', videoUrl: 'https://www.youtube.com/watch?v=lab4_mod1' }, // Placeholder URL updated
+                { title: 'Demanda, Admisión y Notificación' },
+                { title: 'Audiencias (Conciliación, Decisión, Trámite y Juzgamiento)'},
+                { title: 'Régimen Probatorio Laboral', videoUrl: 'https://www.youtube.com/watch?v=lab4_mod2' }, // Placeholder URL updated
+                { title: 'Recursos (Reposición, Apelación, Súplica, Casación, Revisión)' },
+                { title: 'Procesos Especiales (Fuero Sindical, Huelga)' },
             ]
         },
     ],
@@ -286,5 +288,3 @@ export default function CursosPage() {
 }
 // Added this export to satisfy Next.js convention, though data is static here
 export { lawModules };
-
-    
