@@ -1,9 +1,12 @@
+'use client'; // Add this directive
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ListChecks } from 'lucide-react';
+import { ArrowLeft, ListChecks, CheckCircle2, Circle } from 'lucide-react'; // Added CheckCircle2 and Circle for status
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { useState, useEffect } from 'react'; // Import useState and useEffect
 
 // Import the same data used on the main courses page
 // In a real app, this might be fetched from a database based on the 'id'
@@ -26,8 +29,36 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     notFound();
   }
 
-  // Placeholder progress value (e.g., 30%)
-  const progressValue = 30;
+  // State for module completion status
+  // Initialize with all false, length based on course modules
+  const [completedStatus, setCompletedStatus] = useState<boolean[]>(
+    () => course?.modules?.map(() => false) || []
+  );
+
+  // State for overall progress percentage
+  const [progressValue, setProgressValue] = useState(0);
+
+  // Function to toggle module completion
+  const toggleModuleCompletion = (index: number) => {
+    setCompletedStatus((prevStatus) => {
+      const newStatus = [...prevStatus];
+      newStatus[index] = !newStatus[index];
+      return newStatus;
+    });
+  };
+
+  // Effect to calculate progress whenever completion status changes
+  useEffect(() => {
+    const totalModules = completedStatus.length;
+    if (totalModules === 0) {
+      setProgressValue(0);
+      return;
+    }
+    const completedCount = completedStatus.filter(Boolean).length;
+    const newProgress = Math.round((completedCount / totalModules) * 100);
+    setProgressValue(newProgress);
+  }, [completedStatus]);
+
 
   return (
     <div className="container mx-auto px-4 py-16 md:px-6 md:py-24 lg:py-32">
@@ -61,16 +92,30 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                  <ListChecks className="h-5 w-5 text-accent" />
                  Módulos del Curso
               </CardTitle>
-              <CardDescription>Contenido estructurado para tu aprendizaje.</CardDescription>
+              <CardDescription>Haz clic en un módulo para marcarlo como completado.</CardDescription>
             </CardHeader>
             <CardContent>
               {course.modules && course.modules.length > 0 ? (
                 <ul className="space-y-3">
                   {course.modules.map((moduleTitle, index) => (
-                    <li key={index} className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-                      <span className="text-sm font-medium">{`Módulo ${index + 1}: ${moduleTitle}`}</span>
-                      {/* Placeholder for module status/action */}
-                      <Button variant="ghost" size="sm" disabled>Completado</Button>
+                    <li key={index} className="flex items-center justify-between p-3 bg-secondary/50 rounded-md transition-colors duration-200 hover:bg-secondary">
+                      <span className={`text-sm font-medium ${completedStatus[index] ? 'text-muted-foreground line-through' : ''}`}>
+                        {`Módulo ${index + 1}: ${moduleTitle}`}
+                      </span>
+                      <Button
+                        variant={completedStatus[index] ? 'secondary' : 'outline'}
+                        size="sm"
+                        onClick={() => toggleModuleCompletion(index)}
+                        className={`transition-colors duration-200 ${completedStatus[index] ? 'bg-green-100 hover:bg-green-200 text-green-800 border-green-200' : ''}`}
+                        aria-pressed={completedStatus[index]} // Accessibility improvement
+                        aria-label={`Marcar Módulo ${index + 1} como ${completedStatus[index] ? 'no completado' : 'completado'}`}
+                      >
+                        {completedStatus[index] ? (
+                           <> <CheckCircle2 className="mr-2 h-4 w-4" /> Completado </>
+                        ) : (
+                           <> <Circle className="mr-2 h-4 w-4" /> Marcar </>
+                        )}
+                      </Button>
                     </li>
                   ))}
                 </ul>
@@ -89,8 +134,11 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
              </CardHeader>
              <CardContent className="space-y-4">
                <Progress value={progressValue} aria-label={`Progreso del curso: ${progressValue}%`} />
-               <p className="text-center text-sm text-muted-foreground">{progressValue}% Completado (Ejemplo)</p>
-               <Button className="w-full" disabled>Continuar Aprendiendo</Button>
+               <p className="text-center text-sm text-muted-foreground">{progressValue}% Completado</p>
+               {/* Enable button only if not 100% complete? Or link to next module? Placeholder for now */}
+               <Button className="w-full" disabled={progressValue === 100}>
+                   {progressValue === 100 ? '¡Curso Completado!' : 'Continuar Aprendiendo'}
+               </Button>
              </CardContent>
            </Card>
 
@@ -110,7 +158,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
        <div className="mt-16 p-4 border rounded-lg bg-secondary/50 text-center">
             <h3 className="font-semibold text-lg mb-2">Nota de Desarrollo</h3>
             <p className="text-sm text-muted-foreground">
-                El contenido de los módulos y la barra de progreso son ejemplos. La funcionalidad completa (seguimiento de progreso, contenido real del módulo) se implementará en futuras etapas.
+                El progreso del curso ahora es interactivo. El contenido real de cada módulo se implementará en futuras etapas. El estado de completado no se guarda permanentemente (se reinicia al recargar).
             </p>
        </div>
     </div>
