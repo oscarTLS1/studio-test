@@ -26,46 +26,44 @@ function YouTubePlayer({ videoId }: { videoId: string | null }) {
       if (!url) return null;
       let videoID: string | null = null;
       try {
-          // Standard watch URL: https://www.youtube.com/watch?v=VIDEO_ID
-          if (url.includes('youtube.com/watch?v=')) {
-              const urlObj = new URL(url);
-              videoID = urlObj.searchParams.get('v');
-          }
-          // Shorts URL: https://www.youtube.com/shorts/VIDEO_ID
-          else if (url.includes('youtube.com/shorts/')) {
-              const parts = url.split('/shorts/');
-              videoID = parts[1]?.split('?')[0]; // Get part after /shorts/ and before any query params
-          }
-          // Shortened youtu.be URL: https://youtu.be/VIDEO_ID
-          else if (url.includes('youtu.be/')) {
-              const parts = url.split('youtu.be/');
-              videoID = parts[1]?.split('?')[0]; // Get part after youtu.be/ and before any query params
-          }
-          // Embed URL: https://www.youtube.com/embed/VIDEO_ID
-          else if (url.includes('youtube.com/embed/')) {
-              const parts = url.split('/embed/');
-              videoID = parts[1]?.split('?')[0];
-          }
-          // If it looks like just an ID (no slashes, no query params)
-          else if (!url.includes('/') && !url.includes('?') && url.length > 5) { // Basic check for ID-like string
-             videoID = url;
+          // Regular expression to find YouTube IDs in various URL formats
+          const regex = /(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+          const match = url.match(regex);
+          videoID = match ? match[1] : null;
+
+          // If regex fails, try simple splitting for edge cases (less reliable)
+          if (!videoID) {
+              if (url.includes('youtube.com/watch?v=')) {
+                  const urlObj = new URL(url);
+                  videoID = urlObj.searchParams.get('v');
+              } else if (url.includes('youtu.be/')) {
+                  const parts = url.split('youtu.be/');
+                  videoID = parts[1]?.split('?')[0];
+              } else if (url.includes('/embed/')) {
+                  const parts = url.split('/embed/');
+                  videoID = parts[1]?.split('?')[0];
+              } else if (url.includes('/shorts/')) {
+                   const parts = url.split('/shorts/');
+                   videoID = parts[1]?.split('?')[0];
+              }
+              // Basic validation if splitting worked
+              if (videoID && !/^[a-zA-Z0-9_-]{11}$/.test(videoID)) {
+                  console.warn("Potentially invalid YouTube ID extracted via splitting:", videoID);
+                  videoID = null; // Invalidate if it doesn't match pattern
+              }
           }
 
-          // Basic validation for common ID patterns (alphanumeric, underscore, hyphen)
+          // Final check on the extracted ID
           if (videoID && /^[a-zA-Z0-9_-]{11}$/.test(videoID)) {
               return videoID;
           } else {
-              console.warn("Extracted string doesn't look like a standard YouTube ID:", videoID);
-              // Fallback: If we couldn't extract a standard ID, maybe the input *was* the ID?
-              // Or perhaps return null if strict parsing is needed.
-              // Let's try returning the initial non-null extraction if validation fails, might still work in some cases.
-              return videoID || null;
+              console.warn("Could not extract a valid YouTube ID from URL:", url, "Extracted:", videoID);
+              return null; // Return null if no valid ID found
           }
 
       } catch (e) {
           console.error("Error parsing video URL:", url, e);
-          // If parsing fails, it might be just the ID or invalid. Return null.
-          return null;
+          return null; // Return null on parsing error
       }
   };
 
@@ -83,7 +81,7 @@ function YouTubePlayer({ videoId }: { videoId: string | null }) {
       );
   }
 
-  const embedUrl = `https://www.youtube.com/embed/${extractedId}`;
+  const embedUrl = `https://www.youtube.com/embed/${extractedId}?autoplay=0&rel=0`; // Added common parameters
 
   return (
     <div className="aspect-video w-full overflow-hidden rounded-lg shadow-lg border">
@@ -95,6 +93,7 @@ function YouTubePlayer({ videoId }: { videoId: string | null }) {
         frameBorder="0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowFullScreen
+        loading="lazy" // Add lazy loading
       ></iframe>
     </div>
   );
@@ -126,9 +125,11 @@ export default function CourseDetailPage() {
         // Initialize completion status based on the found course
         const initialStatus = foundCourse.modules?.map(() => false) || [];
         setCompletedStatus(initialStatus);
-        // Optionally, set the first video as default if available
-        const firstVideoModule = foundCourse.modules?.find(m => m.videoUrl);
-        setSelectedVideoUrl(firstVideoModule?.videoUrl || null);
+
+        // Find the first module that *has* a videoUrl and set it as default
+        const firstVideoModule = foundCourse.modules?.find(m => m.videoUrl && m.videoUrl.trim() !== '');
+        setSelectedVideoUrl(firstVideoModule?.videoUrl || null); // Set null if no module has a video initially
+
         // Initialize progress based on initial status
         const totalModules = initialStatus.length;
         const completedCount = initialStatus.filter(Boolean).length;
