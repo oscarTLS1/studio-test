@@ -148,6 +148,7 @@ export function CoursesSection() {
           <CarouselPrevious className="absolute left-[-50px] top-1/2 -translate-y-1/2 hidden sm:inline-flex" />
           <CarouselNext className="absolute right-[-50px] top-1/2 -translate-y-1/2 hidden sm:inline-flex" />
            {/* Optional: Add indicators if desired (requires manual implementation or another library) */}
+           {/* Note: Shadcn Carousel component doesn't have built-in dot indicators */}
         </Carousel>
 
         {/* "Ver Todos los Cursos" button remains */}
