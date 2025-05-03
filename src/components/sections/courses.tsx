@@ -1,5 +1,4 @@
-
-'use client'; // Required for useRef and Autoplay plugin
+'use client'; // Required for useRef, hooks, and Autoplay plugin
 
 import * as React from 'react';
 import Autoplay from 'embla-carousel-autoplay'; // Import Autoplay plugin
@@ -14,7 +13,8 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "@/components/ui/carousel"; // Import Carousel components
+  CarouselDots, // Import the new CarouselDots component
+} from "@/components/ui/carousel";
 
 // Data structure for law areas (remains the same)
 const lawModules = [
@@ -84,9 +84,9 @@ const lawModules = [
 ];
 
 export function CoursesSection() {
-   // Add Autoplay plugin
+   // Add Autoplay plugin with updated delay
   const plugin = React.useRef(
-    Autoplay({ delay: 5000, stopOnInteraction: true, stopOnMouseEnter: true })
+    Autoplay({ delay: 3000, stopOnInteraction: true, stopOnMouseEnter: true }) // Changed delay to 3000ms (3 seconds)
   );
 
   return (
@@ -147,8 +147,8 @@ export function CoursesSection() {
           </CarouselContent>
           <CarouselPrevious className="absolute left-[-50px] top-1/2 -translate-y-1/2 hidden sm:inline-flex" />
           <CarouselNext className="absolute right-[-50px] top-1/2 -translate-y-1/2 hidden sm:inline-flex" />
-           {/* Optional: Add indicators if desired (requires manual implementation or another library) */}
-           {/* Note: Shadcn Carousel component doesn't have built-in dot indicators */}
+          {/* Add the CarouselDots component */}
+          <CarouselDots className="mt-4" />
         </Carousel>
 
         {/* "Ver Todos los Cursos" button remains */}

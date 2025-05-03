@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -29,6 +28,9 @@ type CarouselContextProps = {
   scrollNext: () => void
   canScrollPrev: boolean
   canScrollNext: boolean
+  scrollSnaps: number[] // Added for indicators
+  selectedScrollSnap: number // Added for indicators
+  scrollTo: (index: number) => void // Added for indicators
 } & CarouselProps
 
 const CarouselContext = React.createContext<CarouselContextProps | null>(null)
@@ -68,15 +70,28 @@ const Carousel = React.forwardRef<
     )
     const [canScrollPrev, setCanScrollPrev] = React.useState(false)
     const [canScrollNext, setCanScrollNext] = React.useState(false)
+    const [scrollSnaps, setScrollSnaps] = React.useState<number[]>([]) // State for scroll snaps
+    const [selectedScrollSnap, setSelectedScrollSnap] = React.useState<number>(0) // State for selected snap
 
     const onSelect = React.useCallback((api: CarouselApi) => {
       if (!api) {
         return
       }
-
+      setSelectedScrollSnap(api.selectedScrollSnap()) // Update selected snap
       setCanScrollPrev(api.canScrollPrev())
       setCanScrollNext(api.canScrollNext())
     }, [])
+
+     const onInit = React.useCallback((api: CarouselApi) => { // Add onInit callback
+        if (!api) {
+          return;
+        }
+        setScrollSnaps(api.scrollSnapList()); // Set scroll snaps on init
+        setSelectedScrollSnap(api.selectedScrollSnap()); // Set initial selected snap
+        setCanScrollPrev(api.canScrollPrev());
+        setCanScrollNext(api.canScrollNext());
+      }, []);
+
 
     const scrollPrev = React.useCallback(() => {
       api?.scrollPrev()
@@ -85,6 +100,10 @@ const Carousel = React.forwardRef<
     const scrollNext = React.useCallback(() => {
       api?.scrollNext()
     }, [api])
+
+    const scrollTo = React.useCallback((index: number) => { // Add scrollTo function
+        api?.scrollTo(index);
+    }, [api]);
 
     const handleKeyDown = React.useCallback(
       (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -112,14 +131,15 @@ const Carousel = React.forwardRef<
         return
       }
 
-      onSelect(api)
-      api.on("reInit", onSelect)
+      onInit(api); // Call onInit
+      api.on("reInit", onInit); // Use onInit for reInit as well
       api.on("select", onSelect)
 
       return () => {
         api?.off("select", onSelect)
+        api?.off("reInit", onInit);
       }
-    }, [api, onSelect])
+    }, [api, onInit, onSelect]) // Include onInit dependency
 
     return (
       <CarouselContext.Provider
@@ -133,6 +153,9 @@ const Carousel = React.forwardRef<
           scrollNext,
           canScrollPrev,
           canScrollNext,
+          scrollSnaps, // Pass scrollSnaps
+          selectedScrollSnap, // Pass selectedScrollSnap
+          scrollTo, // Pass scrollTo
         }}
       >
         <div
@@ -253,6 +276,38 @@ const CarouselNext = React.forwardRef<
 })
 CarouselNext.displayName = "CarouselNext"
 
+// New component for Dot Button
+const CarouselDots = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  const { scrollSnaps, selectedScrollSnap, scrollTo } = useCarousel();
+
+  return (
+    <div
+      ref={ref}
+      className={cn("flex items-center justify-center gap-2 py-4", className)}
+      {...props}
+    >
+      {scrollSnaps.map((_, index) => (
+        <Button
+          key={index}
+          variant="outline"
+          size="icon"
+          className={cn(
+            "h-2 w-2 rounded-full p-0", // Smaller size, no padding
+            index === selectedScrollSnap ? "bg-primary" : "bg-muted" // Active state styling
+          )}
+          onClick={() => scrollTo(index)}
+          aria-label={`Go to slide ${index + 1}`}
+        />
+      ))}
+    </div>
+  );
+});
+CarouselDots.displayName = "CarouselDots";
+
+
 export {
   type CarouselApi,
   Carousel,
@@ -260,4 +315,6 @@ export {
   CarouselItem,
   CarouselPrevious,
   CarouselNext,
+  CarouselDots, // Export CarouselDots
+  useCarousel, // Export useCarousel hook if needed externally
 }
