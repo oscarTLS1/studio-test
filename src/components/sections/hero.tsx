@@ -21,7 +21,7 @@ export function HeroSection() {
 
       <div className="container relative z-20 mx-auto px-4 md:px-6 text-center">
         <h1 className="text-4xl font-bold tracking-tight text-primary sm:text-5xl md:text-6xl lg:text-7xl">
-          Asesoría Legal Confiable y Experta
+          Aprende y Asesórate con los Mejores en Derecho y Finanzas
         </h1>
         <p className="mt-6 text-lg leading-8 text-foreground/80 md:text-xl lg:text-2xl max-w-3xl mx-auto">
           Protegemos tus derechos y ofrecemos soluciones legales efectivas. Agenda tu consulta gratuita hoy mismo.
